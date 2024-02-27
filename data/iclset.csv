@@ -1,0 +1,1481 @@
+id,program_idx,file_path,idx,src,dst,src_code,dst_code,sa_lb_direct,sa_lb,da_lb,dst_name_match,dst_funcname,actual_lb,actual_lb_trans,is_static,src_class,mvs,src_ancestors,src_descendants,dst_class,dst_ancestors,dst_descendants,invocation_line,receiver_object,declared_type,runtime_type,class_B,method_x_calls_method_y,your_explanation
+0,1,../replication_package/raw_data/url7315374482_toby1984_3dtest_tgz-pJ8-de_codesourcery_engine_Test3DJ8/wala0cfa.csv,1,de/codesourcery/engine/Test3D.main:([Ljava/lang/String;)V,de/codesourcery/engine/Test3D.run:()V,"public static void main(String[] args) throws InterruptedException {
+    new Test3D().run();
+}","public void run() throws InterruptedException {
+    final World world = new World();
+    final Object3D cube = new Object3D();
+    cube.setPrimitives(LinAlgUtils.createSphere(10f, 7, 7));
+    cube.setIdentifier(""sphere"");
+    cube.setModelMatrix(LinAlgUtils.translationMatrix(0, 7, 0));
+    cube.setForegroundColor(Color.BLUE);
+    for (int i = 0; i < NUM_CUBES; i++) {
+        Object3D tmp = makeRandomizedCopy(i + 1, cube);
+        world.addObject(tmp);
+    }
+    final AtomicReference<Float> fov = new AtomicReference<>(90.0f);
+    System.out.println(""*** setting perspective ***"");
+    world.setupPerspectiveProjection(90, 1.0f, Z_NEAR, Z_FAR);
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    System.out.println(""Frustum is now: "" + world.getFrustum());
+    System.out.println(""*** setting eye position and view vector ***"");
+    final Vector4 defaultEyePosition = vector(0, 0, 0);
+    final Camera camera = world.getCamera();
+    camera.setEyePosition(defaultEyePosition, vector(0, 0, -1));
+    camera.updateViewMatrix();
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    final SoftwareRenderer renderer = new SoftwareRenderer();
+    renderer.setAmbientLightFactor(0.25f);
+    renderer.setLightPosition(new Vector4(0, 100, 100));
+    renderer.setWorld(world);
+    final Panel3D canvas = new Panel3D(renderer) {
+        @Override
+        protected void panelResized(int newWidth, int newHeight) {
+            aspectRatio = newWidth / (float) newHeight;
+            world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+        }
+    };
+    final JFrame frame = new JFrame(""test"");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    canvas.setPreferredSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    canvas.setMinimumSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    frame.getContentPane().setLayout(new BorderLayout());
+    frame.getContentPane().add(canvas, BorderLayout.CENTER);
+    frame.pack();
+    frame.setVisible(true);
+    final MouseMotionTracker tracker = new MouseMotionTracker() {
+        private Cursor blankCursor;
+        {
+            final BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), ""blank cursor"");
+        }
+        @Override
+        protected void updateEyeTarget(float x, float y, float z) {
+            camera.setViewOrientation(new Vector4(x, y, z));
+            camera.updateViewMatrix();
+            canvas.repaint();
+        }
+        @Override
+        public void setTrackingEnabled(boolean trackingEnabled) {
+            super.setTrackingEnabled(trackingEnabled);
+            showOrHideMouseCursor(trackingEnabled);
+        }
+        private void showOrHideMouseCursor(boolean hide) {
+            if (hide) {
+                frame.getContentPane().setCursor(blankCursor);
+            } else {
+                frame.getContentPane().setCursor(Cursor.getDefaultCursor());
+            }
+        }
+    };
+    tracker.setViewOrientation(camera.getViewOrientation());
+    tracker.setTrackingEnabled(true);
+    frame.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            tracker.mouseMoved(e.getX(), e.getY());
+        }
+    });
+    frame.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                tracker.setTrackingEnabled(true);
+            }
+        }
+    });
+    frame.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusLost(FocusEvent e) {
+            tracker.setTrackingEnabled(false);
+        }
+    });
+    frame.addKeyListener(new KeyAdapter() {
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            int keyCode = e.getKeyCode();
+            switch(keyCode) {
+                case KeyEvent.VK_ESCAPE:
+                    tracker.setTrackingEnabled(false);
+                    break;
+                case KeyEvent.VK_PLUS:
+                    fov.set(fov.get() - 1);
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    break;
+                case KeyEvent.VK_MINUS:
+                    fov.set(fov.get() + 1);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    break;
+                case KeyEvent.VK_ENTER:
+                    tracker.reset();
+                    camera.reset();
+                    break;
+                case KeyEvent.VK_W:
+                    camera.moveForward(INC_Z);
+                    break;
+                case KeyEvent.VK_S:
+                    camera.moveBackward(INC_Z);
+                    break;
+                case KeyEvent.VK_A:
+                    camera.strafeLeft(INC_X);
+                    break;
+                case KeyEvent.VK_D:
+                    camera.strafeRight(INC_X);
+                    break;
+                case KeyEvent.VK_Q:
+                    camera.moveUp(INC_Y);
+                    break;
+                case KeyEvent.VK_E:
+                    camera.moveDown(INC_Y);
+                    break;
+                default:
+                    return;
+            }
+            camera.updateViewMatrix();
+        }
+    });
+    canvas.repaint();
+    float x1 = 10;
+    float y1 = 20;
+    float z1 = 30;
+    while (true) {
+        Matrix rot1 = LinAlgUtils.rotY(y1);
+        rot1 = rot1.multiply(LinAlgUtils.rotX(x1));
+        for (Object3D tmp : world.getObjects()) {
+            Matrix translation = (Matrix) tmp.getMetaData(Object3D.METADATA_TRANSLATION_MATRIX);
+            if (translation != null) {
+                rot1 = translation.multiply(rot1);
+            }
+            tmp.setModelMatrix(rot1.multiply(rot1));
+        }
+        canvas.repaint();
+        x1 += 0.5;
+        y1 += 1;
+        z1 += 1.5;
+        Thread.sleep(20);
+    }
+}",1,1,1,TRUE,run,1,1,FALSE,de.codesourcery.engine.Test3D,,[],[],de.codesourcery.engine.Test3D,[],[],new Test3D().run();,Test3D,Test3D,Test3D,de.codesourcery.engine.Test3D,YES,"My goal is to find the `run` method of `Test3D` within the `main` function. Obviously, ""new Test3D().run();"" creates a new instance of `Test3D` and calls the `run` method of the class `Test3D`. Therefore, I deduce that the receiver object is `Test3D`, both in terms of declared type and inferred type, which coincides with `class_B`."
+1,1,../replication_package/raw_data/url7315374482_toby1984_3dtest_tgz-pJ8-de_codesourcery_engine_Test3DJ8/wala0cfa.csv,2,de/codesourcery/engine/Test3D.run:()V,de/codesourcery/engine/render/Object3D.toString:()Ljava/lang/String;,"public void run() throws InterruptedException {
+    final World world = new World();
+    final Object3D cube = new Object3D();
+    cube.setPrimitives(LinAlgUtils.createSphere(10f, 7, 7));
+    cube.setIdentifier(""sphere"");
+    cube.setModelMatrix(LinAlgUtils.translationMatrix(0, 7, 0));
+    cube.setForegroundColor(Color.BLUE);
+    for (int i = 0; i < NUM_CUBES; i++) {
+        Object3D tmp = makeRandomizedCopy(i + 1, cube);
+        world.addObject(tmp);
+    }
+    final AtomicReference<Float> fov = new AtomicReference<>(90.0f);
+    System.out.println(""*** setting perspective ***"");
+    world.setupPerspectiveProjection(90, 1.0f, Z_NEAR, Z_FAR);
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    System.out.println(""Frustum is now: "" + world.getFrustum());
+    System.out.println(""*** setting eye position and view vector ***"");
+    final Vector4 defaultEyePosition = vector(0, 0, 0);
+    final Camera camera = world.getCamera();
+    camera.setEyePosition(defaultEyePosition, vector(0, 0, -1));
+    camera.updateViewMatrix();
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    final SoftwareRenderer renderer = new SoftwareRenderer();
+    renderer.setAmbientLightFactor(0.25f);
+    renderer.setLightPosition(new Vector4(0, 100, 100));
+    renderer.setWorld(world);
+    final Panel3D canvas = new Panel3D(renderer) {
+        @Override
+        protected void panelResized(int newWidth, int newHeight) {
+            aspectRatio = newWidth / (float) newHeight;
+            world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+        }
+    };
+    final JFrame frame = new JFrame(""test"");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    canvas.setPreferredSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    canvas.setMinimumSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    frame.getContentPane().setLayout(new BorderLayout());
+    frame.getContentPane().add(canvas, BorderLayout.CENTER);
+    frame.pack();
+    frame.setVisible(true);
+    final MouseMotionTracker tracker = new MouseMotionTracker() {
+        private Cursor blankCursor;
+        {
+            final BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), ""blank cursor"");
+        }
+        @Override
+        protected void updateEyeTarget(float x, float y, float z) {
+            camera.setViewOrientation(new Vector4(x, y, z));
+            camera.updateViewMatrix();
+            canvas.repaint();
+        }
+        @Override
+        public void setTrackingEnabled(boolean trackingEnabled) {
+            super.setTrackingEnabled(trackingEnabled);
+            showOrHideMouseCursor(trackingEnabled);
+        }
+        private void showOrHideMouseCursor(boolean hide) {
+            if (hide) {
+                frame.getContentPane().setCursor(blankCursor);
+            } else {
+                frame.getContentPane().setCursor(Cursor.getDefaultCursor());
+            }
+        }
+    };
+    tracker.setViewOrientation(camera.getViewOrientation());
+    tracker.setTrackingEnabled(true);
+    frame.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            tracker.mouseMoved(e.getX(), e.getY());
+        }
+    });
+    frame.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                tracker.setTrackingEnabled(true);
+            }
+        }
+    });
+    frame.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusLost(FocusEvent e) {
+            tracker.setTrackingEnabled(false);
+        }
+    });
+    frame.addKeyListener(new KeyAdapter() {
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            int keyCode = e.getKeyCode();
+            switch(keyCode) {
+                case KeyEvent.VK_ESCAPE:
+                    tracker.setTrackingEnabled(false);
+                    break;
+                case KeyEvent.VK_PLUS:
+                    fov.set(fov.get() - 1);
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    break;
+                case KeyEvent.VK_MINUS:
+                    fov.set(fov.get() + 1);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    break;
+                case KeyEvent.VK_ENTER:
+                    tracker.reset();
+                    camera.reset();
+                    break;
+                case KeyEvent.VK_W:
+                    camera.moveForward(INC_Z);
+                    break;
+                case KeyEvent.VK_S:
+                    camera.moveBackward(INC_Z);
+                    break;
+                case KeyEvent.VK_A:
+                    camera.strafeLeft(INC_X);
+                    break;
+                case KeyEvent.VK_D:
+                    camera.strafeRight(INC_X);
+                    break;
+                case KeyEvent.VK_Q:
+                    camera.moveUp(INC_Y);
+                    break;
+                case KeyEvent.VK_E:
+                    camera.moveDown(INC_Y);
+                    break;
+                default:
+                    return;
+            }
+            camera.updateViewMatrix();
+        }
+    });
+    canvas.repaint();
+    float x1 = 10;
+    float y1 = 20;
+    float z1 = 30;
+    while (true) {
+        Matrix rot1 = LinAlgUtils.rotY(y1);
+        rot1 = rot1.multiply(LinAlgUtils.rotX(x1));
+        for (Object3D tmp : world.getObjects()) {
+            Matrix translation = (Matrix) tmp.getMetaData(Object3D.METADATA_TRANSLATION_MATRIX);
+            if (translation != null) {
+                rot1 = translation.multiply(rot1);
+            }
+            tmp.setModelMatrix(rot1.multiply(rot1));
+        }
+        canvas.repaint();
+        x1 += 0.5;
+        y1 += 1;
+        z1 += 1.5;
+        Thread.sleep(20);
+    }
+}","@Override
+public String toString() {
+    return getIdentifier() != null ? getIdentifier() : ""<not object identifier set>"";
+}",0,1,0,FALSE,toString,0,0,FALSE,de.codesourcery.engine.Test3D,,[],[],de.codesourcery.engine.render.Object3D,[java.lang.Iterable<de.codesourcery.engine.geom.IConvexPolygon>],[],nonexistent,nonexistent,nonexistent,nonexistent,de.codesourcery.engine.render.Object3D,NO,"In the function 'run()', an instance of Test3D is created, but the 'toString()' method of the Test3D class is not called. Therefore, the answer is No."
+2,1,../replication_package/raw_data/url7315374482_toby1984_3dtest_tgz-pJ8-de_codesourcery_engine_Test3DJ8/wala0cfa.csv,16,de/codesourcery/engine/Test3D.run:()V,de/codesourcery/engine/render/SoftwareRenderer.<init>:()V,"public void run() throws InterruptedException {
+    final World world = new World();
+    final Object3D cube = new Object3D();
+    cube.setPrimitives(LinAlgUtils.createSphere(10f, 7, 7));
+    cube.setIdentifier(""sphere"");
+    cube.setModelMatrix(LinAlgUtils.translationMatrix(0, 7, 0));
+    cube.setForegroundColor(Color.BLUE);
+    for (int i = 0; i < NUM_CUBES; i++) {
+        Object3D tmp = makeRandomizedCopy(i + 1, cube);
+        world.addObject(tmp);
+    }
+    final AtomicReference<Float> fov = new AtomicReference<>(90.0f);
+    System.out.println(""*** setting perspective ***"");
+    world.setupPerspectiveProjection(90, 1.0f, Z_NEAR, Z_FAR);
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    System.out.println(""Frustum is now: "" + world.getFrustum());
+    System.out.println(""*** setting eye position and view vector ***"");
+    final Vector4 defaultEyePosition = vector(0, 0, 0);
+    final Camera camera = world.getCamera();
+    camera.setEyePosition(defaultEyePosition, vector(0, 0, -1));
+    camera.updateViewMatrix();
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    final SoftwareRenderer renderer = new SoftwareRenderer();
+    renderer.setAmbientLightFactor(0.25f);
+    renderer.setLightPosition(new Vector4(0, 100, 100));
+    renderer.setWorld(world);
+    final Panel3D canvas = new Panel3D(renderer) {
+        @Override
+        protected void panelResized(int newWidth, int newHeight) {
+            aspectRatio = newWidth / (float) newHeight;
+            world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+        }
+    };
+    final JFrame frame = new JFrame(""test"");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    canvas.setPreferredSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    canvas.setMinimumSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    frame.getContentPane().setLayout(new BorderLayout());
+    frame.getContentPane().add(canvas, BorderLayout.CENTER);
+    frame.pack();
+    frame.setVisible(true);
+    final MouseMotionTracker tracker = new MouseMotionTracker() {
+        private Cursor blankCursor;
+        {
+            final BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), ""blank cursor"");
+        }
+        @Override
+        protected void updateEyeTarget(float x, float y, float z) {
+            camera.setViewOrientation(new Vector4(x, y, z));
+            camera.updateViewMatrix();
+            canvas.repaint();
+        }
+        @Override
+        public void setTrackingEnabled(boolean trackingEnabled) {
+            super.setTrackingEnabled(trackingEnabled);
+            showOrHideMouseCursor(trackingEnabled);
+        }
+        private void showOrHideMouseCursor(boolean hide) {
+            if (hide) {
+                frame.getContentPane().setCursor(blankCursor);
+            } else {
+                frame.getContentPane().setCursor(Cursor.getDefaultCursor());
+            }
+        }
+    };
+    tracker.setViewOrientation(camera.getViewOrientation());
+    tracker.setTrackingEnabled(true);
+    frame.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            tracker.mouseMoved(e.getX(), e.getY());
+        }
+    });
+    frame.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                tracker.setTrackingEnabled(true);
+            }
+        }
+    });
+    frame.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusLost(FocusEvent e) {
+            tracker.setTrackingEnabled(false);
+        }
+    });
+    frame.addKeyListener(new KeyAdapter() {
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            int keyCode = e.getKeyCode();
+            switch(keyCode) {
+                case KeyEvent.VK_ESCAPE:
+                    tracker.setTrackingEnabled(false);
+                    break;
+                case KeyEvent.VK_PLUS:
+                    fov.set(fov.get() - 1);
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    break;
+                case KeyEvent.VK_MINUS:
+                    fov.set(fov.get() + 1);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    break;
+                case KeyEvent.VK_ENTER:
+                    tracker.reset();
+                    camera.reset();
+                    break;
+                case KeyEvent.VK_W:
+                    camera.moveForward(INC_Z);
+                    break;
+                case KeyEvent.VK_S:
+                    camera.moveBackward(INC_Z);
+                    break;
+                case KeyEvent.VK_A:
+                    camera.strafeLeft(INC_X);
+                    break;
+                case KeyEvent.VK_D:
+                    camera.strafeRight(INC_X);
+                    break;
+                case KeyEvent.VK_Q:
+                    camera.moveUp(INC_Y);
+                    break;
+                case KeyEvent.VK_E:
+                    camera.moveDown(INC_Y);
+                    break;
+                default:
+                    return;
+            }
+            camera.updateViewMatrix();
+        }
+    });
+    canvas.repaint();
+    float x1 = 10;
+    float y1 = 20;
+    float z1 = 30;
+    while (true) {
+        Matrix rot1 = LinAlgUtils.rotY(y1);
+        rot1 = rot1.multiply(LinAlgUtils.rotX(x1));
+        for (Object3D tmp : world.getObjects()) {
+            Matrix translation = (Matrix) tmp.getMetaData(Object3D.METADATA_TRANSLATION_MATRIX);
+            if (translation != null) {
+                rot1 = translation.multiply(rot1);
+            }
+            tmp.setModelMatrix(rot1.multiply(rot1));
+        }
+        canvas.repaint();
+        x1 += 0.5;
+        y1 += 1;
+        z1 += 1.5;
+        Thread.sleep(20);
+    }
+}","public SoftwareRenderer() {
+    int threadCount = Runtime.getRuntime().availableProcessors();
+    if (threadCount > 1) {
+        threadCount--;
+    }
+    setupThreadPool(threadCount);
+}",1,1,1,TRUE,SoftwareRenderer,1,1,FALSE,de.codesourcery.engine.Test3D,,[],[],de.codesourcery.engine.render.SoftwareRenderer,[],[],final SoftwareRenderer renderer = new SoftwareRenderer();,SoftwareRenderer,SoftwareRenderer,SoftwareRenderer,de.codesourcery.engine.render.SoftwareRenderer,YES,"To locate the invocation of SoftwareRenderer() within run(), I performed a line-by-line search and discovered that final SoftwareRenderer renderer = new SoftwareRenderer(); is a constructor call for the SoftwareRenderer class. Therefore, both the declared type and runtime type are 'SoftwareRenderer'."
+3,1,../replication_package/raw_data/url7315374482_toby1984_3dtest_tgz-pJ8-de_codesourcery_engine_Test3DJ8/wala0cfa.csv,537,de/codesourcery/engine/render/Object3D.setForegroundColor:(Ljava/awt/Color;)V,de/codesourcery/engine/render/Object3D.toString:()Ljava/lang/String;,"public void setForegroundColor(Color c) {
+    int value = c.getRGB();
+    if (this.colors != null) {
+        final int len = this.colors.length;
+        for (int i = 0; i < len; i++) {
+            colors[i] = value;
+        }
+    } else {
+        System.err.println(""setColor() invoked on "" + this + "" without calling setTriangles() first ?"");
+    }
+}","@Override
+public String toString() {
+    return getIdentifier() != null ? getIdentifier() : ""<not object identifier set>"";
+}",0,1,0,FALSE,toString,1,1,FALSE,de.codesourcery.engine.render.Object3D,"public static final java.lang.String METADATA_IDENTIFIER;, public static final java.lang.String METADATA_TRANSLATION_MATRIX;",[java.lang.Iterable<de.codesourcery.engine.geom.IConvexPolygon>],[],de.codesourcery.engine.render.Object3D,[java.lang.Iterable<de.codesourcery.engine.geom.IConvexPolygon>],[],"System.err.println(""setColor() invoked on "" + this + "" without calling setTriangles() first ?"");",this,Object3D,Object3D,de.codesourcery.engine.render.Object3D,YES,"My goal is to find the `toString` method of `Test3D` within the `setForegroundColor` function, but I didn't see an explicit call. However, I noticed that the class where `setForegroundColor` is located is indeed `Test3D`. In the code line ""System.err.println(""""setColor() invoked on """" + this + """" without calling setTriangles() first ?"""");"", there is a `this`, which implicitly calls `this.toString`. Therefore, I have identified the receiver object as `this`."
+4,1,../replication_package/raw_data/url7315374482_toby1984_3dtest_tgz-pJ8-de_codesourcery_engine_Test3DJ8/wala0cfa.csv,543,de/codesourcery/engine/render/Object3D.setForegroundColor:(Ljava/awt/Color;)V,de/codesourcery/engine/linalg/Matrix.toString:()Ljava/lang/String;,"public void setForegroundColor(Color c) {
+    int value = c.getRGB();
+    if (this.colors != null) {
+        final int len = this.colors.length;
+        for (int i = 0; i < len; i++) {
+            colors[i] = value;
+        }
+    } else {
+        System.err.println(""setColor() invoked on "" + this + "" without calling setTriangles() first ?"");
+    }
+}","@Override
+public String toString() {
+    StringBuilder builder = new StringBuilder();
+    for (int y = 0; y < SIZE; y++) {
+        for (int x = 0; x < SIZE; x++) {
+            builder.append(format(get(x, y)));
+        }
+        if ((y + 1) < SIZE) {
+            builder.append(""\n"");
+        }
+    }
+    return builder.toString();
+}",0,1,0,FALSE,toString,0,0,FALSE,de.codesourcery.engine.render.Object3D,"public static final java.lang.String METADATA_IDENTIFIER;, public static final java.lang.String METADATA_TRANSLATION_MATRIX;",[java.lang.Iterable<de.codesourcery.engine.geom.IConvexPolygon>],[],de.codesourcery.engine.linalg.Matrix,[],[],nonexistent,nonexistent,nonexistent,nonexistent,de.codesourcery.engine.linalg.Matrix,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+5,2,../replication_package/raw_data/urlcf7851e92b_Triploblastic_CSCD350_FinalProject_tgz-pJ8-MazeGame_MazeJ8/wala0cfa.csv,215,MazeGeneration/ArrayStack.<init>:()V,MazeGeneration/ArrayStack.<init>:(I)V,"public ArrayStack() {
+    this(DEFAULT_CAPACITY);
+}","public ArrayStack(int cap) {
+    capacity = cap;
+    stack = (E[]) new Object[capacity];
+}",1,1,1,TRUE,ArrayStack,1,1,FALSE,MazeGeneration.ArrayStack,,,,MazeGeneration.ArrayStack,,,this(DEFAULT_CAPACITY);,this,ArrayStack,ArrayStack,MazeGeneration.ArrayStack,YES,"My goal is to find the code line that calls the constructor `ArrayStack()` within method `x`. Upon observation, it is evident that method `x` itself is also a constructor of the class `ArrayStack`, and it calls another constructor within the same class via `'this(DEFAULT_CAPACITY);'`. Therefore, I deduce that the receiver object is `this`, and both the declared type and inferred type are `ArrayStack`."
+6,2,../replication_package/raw_data/urlcf7851e92b_Triploblastic_CSCD350_FinalProject_tgz-pJ8-MazeGame_MazeJ8/wala0cfa.csv,216,MazeRoomLogic/QuestionRoomEnterBehavior.enter:()Z,TriviaQuestions/MovieTriviaQuestionFactory.buildQuestion:()LTriviaQuestions/MovieTriviaQuestion;,"@Override
+public boolean enter() {
+    MovieTriviaQuestion question = questionFactory.buildQuestion();
+    question.displayPrompt();
+    while (!question.isSubmitted()) {
+        try {
+            Thread.sleep(10);
+        } catch (Exception e) {
+        }
+    }
+    question.closePrompt();
+    boolean isCorrect = question.isCorrectAnswer();
+    System.out.println(""\nReturned "" + isCorrect);
+    return isCorrect;
+}",class MovieTriviaQuestionFactory { MovieTriviaQuestion buildQuestion ( ) { return MovieTriviaQuestion1; },1,1,0,TRUE,buildQuestion,1,1,FALSE,MazeRoomLogic.QuestionRoomEnterBehavior,,[MazeRoomLogic.MazeRoomEnterBehavior],[],TriviaQuestions.MovieTriviaQuestionFactory,[],[],MovieTriviaQuestion question = questionFactory.buildQuestion();,questionFactory,unknown,unknown,TriviaQuestions.MovieTriviaQuestionFactory,YES,"My goal is to find the `buildQuestion` method of the class `MovieTriviaQuestionFactory` within the `enter()` function. Upon scanning the code in the `enter` function, I found the line ""MovieTriviaQuestion question = questionFactory.buildQuestion();"" which calls the `buildQuestion` method. The receiver object is `questionFactory`, and its declared type and inferred type are unknown. However, from a semantic understanding, it is clear that the variable `questionFactory` must have a strong association with the class `MovieTriviaQuestionFactory`. Therefore, I boldly speculate that the calling relationship is YES."
+7,2,../replication_package/raw_data/urlcf7851e92b_Triploblastic_CSCD350_FinalProject_tgz-pJ8-MazeGame_MazeJ8/wala0cfa.csv,276,MazeGame/Player.getInstance:()LMazeGame/Player;,MazeGame/Player.<init>:()V,"public static Player getInstance() {
+    if (Instance == null)
+        Instance = new Player();
+    return Instance;
+}","private Player() {
+    this.addObserver(new GameOverObserver());
+    facingDirection = Direction.SOUTH;
+    health = 3;
+    keys = 1;
+    points = 0;
+}",1,1,1,TRUE,Player,1,1,FALSE,MazeGame.Player,,[java.util.Observable],[],MazeGame.Player,[java.util.Observable],[],Instance = new Player();,Player,Player,Player,MazeGame.Player,YES,"My goal is to find the constructor of `Player` within the `getInstance` function. Obviously, ""Instance = new Player();"" calls the constructor of the class `Player`, where the receiver object is `Player`, and both the declared type and inferred type are `Player`. Therefore, the conclusion I infer is YES."
+8,2,../replication_package/raw_data/urlcf7851e92b_Triploblastic_CSCD350_FinalProject_tgz-pJ8-MazeGame_MazeJ8/wala0cfa.csv,454,TriviaQuestions/MovieTriviaQuestionPrompt$MovingTogether.componentMoved:(Ljava/awt/event/ComponentEvent;)V,TriviaQuestions/MovieTriviaQuestionPrompt$MovingTogether.componentMoved:(Ljava/awt/event/ComponentEvent;)V,"public void componentMoved(ComponentEvent e) {
+    Window win = (Window) e.getComponent();
+    if (win == winA) {
+        winB.removeComponentListener(this);
+        winB.setLocationRelativeTo(winA);
+        winB.addComponentListener(this);
+    } else if (winB.isVisible())
+        winA.setLocationRelativeTo(winB);
+}","public void componentMoved(ComponentEvent e) {
+    Window win = (Window) e.getComponent();
+    if (win == winA) {
+        winB.removeComponentListener(this);
+        winB.setLocationRelativeTo(winA);
+        winB.addComponentListener(this);
+    } else if (winB.isVisible())
+        winA.setLocationRelativeTo(winB);
+}",0,1,0,TRUE,componentMoved,0,0,FALSE,TriviaQuestions.MovieTriviaQuestionPrompt$MovingTogether,final TriviaQuestions.MovieTriviaQuestionPrompt this$0;,[java.awt.event.ComponentAdapter],[],TriviaQuestions.MovieTriviaQuestionPrompt$MovingTogether,[java.awt.event.ComponentAdapter],[],nonexistent,nonexistent,nonexistent,nonexistent,TriviaQuestions.MovieTriviaQuestionPrompt$MovingTogether,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+9,2,../replication_package/raw_data/urlcf7851e92b_Triploblastic_CSCD350_FinalProject_tgz-pJ8-MazeGame_MazeJ8/wala0cfa.csv,810,MazeRoomLogic/GrantKeyEffect.ApplyEffect:()V,MazeGame/Player.addPoints:(I)V,"@Override
+public void ApplyEffect() {
+    System.out.println(""Keys given!"");
+    Player.getInstance().addPoints(250);
+    Player.getInstance().addKey();
+}","public void addPoints(int amount) {
+    points += amount;
+}",1,1,0,TRUE,addPoints,1,1,FALSE,MazeRoomLogic.GrantKeyEffect,,[MazeRoomLogic.PlayerEffect],[],MazeGame.Player,[java.util.Observable],[],Player.getInstance().addPoints(250);,Player.getInstance(),Player,Player,MazeGame.Player,YES,"My goal is to find the `addPoints` method of the class `Player` within the `ApplyEffect()` function. The line ""Player.getInstance().addPoints(250);"" first obtains an instance of `Player` using `getInstance()`, and then calls the `addPoints` method. Therefore, there is a calling relationship. The receiver object is `Player.getInstance()`, which is semantically inferred to be of type `Player`, so both the declared type and inferred type of the receiver object are `Player`."
+10,2,../replication_package/raw_data/urlcf7851e92b_Triploblastic_CSCD350_FinalProject_tgz-pJ8-MazeGame_MazeJ8/wala0cfa.csv,1484,GameOverLogic/GameOverObserver.update:(Ljava/util/Observable;Ljava/lang/Object;)V,GameOverLogic/HighScoresWindow.setData:(Ljava/lang/String;LGameOverLogic/GameOverObserver;)V,"@Override
+public void update(Observable o, Object arg) {
+    ((GameOverBehavior) arg).Behave();
+    if (Player.getInstance().getPoints() > Integer.parseInt(highScores[9][1])) {
+        String name = (String) JOptionPane.showInputDialog(Maze.mainWindow, ""Please enter your name"", ""New high score!"", JOptionPane.PLAIN_MESSAGE, null, null, null);
+        insertScore(name, Player.getInstance().getPoints());
+        serializeHighScores();
+    }
+    hsWindow = new HighScoresWindow();
+    hsWindow.setData(parseToString(), this);
+    hsWindow.setVisible(true);
+    hsWindow.setModalityType(ModalityType.APPLICATION_MODAL);
+    hsWindow.setBounds(Maze.mainWindow.getBounds());
+    try {
+        Thread.sleep(7000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    hsWindow.dispose();
+    int option = JOptionPane.showOptionDialog(Maze.mainWindow, ""Would you like to play again?"", ""Play again"", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
+    if (option == 0) {
+        Maze.getInstance().reset();
+    } else {
+        Maze.mainWindow.dispose();
+        System.exit(0);
+    }
+}","public void setData(String highScores, GameOverObserver parent) {
+    this.highScores = highScores;
+    this.parent = parent;
+    textPane.setText(this.highScores);
+}",1,1,0,TRUE,setData,1,1,FALSE,GameOverLogic.GameOverObserver,,[java.util.Observer],[],GameOverLogic.HighScoresWindow,[javax.swing.JDialog][java.awt.event.ActionListener],[],"hsWindow.setData(parseToString(), this);",hsWindow,HighScoresWindow,HighScoresWindow,GameOverLogic.HighScoresWindow,YES,"The method `update()` is a bit lengthy, but I can clearly define the objective. My goal is to find the `setData` method of the class `HighScoresWindow` within the `update()` method. By scanning the code of the `update()` method, I found the line ""hsWindow.setData(parseToString(), this);"" which calls the `setData` method, where the receiver object is `hsWindow`. In the line of code above it, ""hsWindow = new HighScoresWindow();"", it can be inferred that the actual runtime type of `hsWindow` is `HighScoresWindow`. Therefore, this calling relationship is reasonable."
+11,3,../replication_package/raw_data/urldd9e4ada6f_kirillF_sample_jenkins_project_tgz-pJ8-com_bigfatplayer_hello_AppJ8/wala0cfa.csv,282,com/bigfatplayer/hello/AppServer.run:()V,org/apache/thrift/transport/TServerSocket.<init>:(I)V,"@Override
+public void run() {
+    CalculatorServer cs = new CalculatorServer();
+    Calculator.Processor processor = new Calculator.Processor(cs);
+    TServerTransport serverTransport = null;
+    try {
+        serverTransport = new TServerSocket(9090);
+    } catch (TTransportException e) {
+        e.printStackTrace();
+    }
+    TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
+    server.serve();
+}","class TServerSocket { void TServerSocket ( int a0, ) { return void1; }",1,1,1,TRUE,TServerSocket,1,1,FALSE,com.bigfatplayer.hello.AppServer,,[java.lang.Runnable],[],org.apache.thrift.transport.TServerSocket,,,serverTransport = new TServerSocket(9090);,serverTransport,TServerSocket,TServerSocket,org.apache.thrift.transport.TServerSocket,YES,"My goal is to find the constructor of `TServerSocket` within the `run` function. While reading the code lines of the `run` function, I found ""serverTransport = new TServerSocket(9090);"" which calls the constructor. Therefore, I infer that the receiver object is `serverTransport`, and its runtime type must be `TServerSocket`, as indicated by the earlier line ""TServerTransport serverTransport = null;""."
+12,3,../replication_package/raw_data/urldd9e4ada6f_kirillF_sample_jenkins_project_tgz-pJ8-com_bigfatplayer_hello_AppJ8/wala0cfa.csv,1407,com/bigfatplayer/hello/CalculatorServer.calculate:(ILcom/bigfatplayer/hello/Work;)I,org/apache/log4j/config/PropertySetterException.getMessage:()Ljava/lang/String;,"@Override
+public int calculate(int log_id, Work w) throws TException {
+    System.out.println(log_id);
+    return w.getNum1() + w.getNum2();
+}",class PropertySetterException { String getMessage ( ) { return String1; },0,1,0,FALSE,getMessage,0,0,FALSE,com.bigfatplayer.hello.CalculatorServer,,[com.bigfatplayer.hello.Calculator$Iface],[],org.apache.log4j.config.PropertySetterException,,,nonexistent,nonexistent,nonexistent,nonexistent,org.apache.log4j.config.PropertySetterException,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+13,3,../replication_package/raw_data/urldd9e4ada6f_kirillF_sample_jenkins_project_tgz-pJ8-com_bigfatplayer_hello_AppJ8/wala0cfa.csv,1463,com/bigfatplayer/hello/CalculatorServer.ping:()V,org/apache/log4j/NameValue.toString:()Ljava/lang/String;,"@Override
+public void ping() throws TException {
+    System.out.println(""Ping"");
+}",class NameValue { String toString ( ) { return String1; },0,1,0,FALSE,toString,0,0,FALSE,com.bigfatplayer.hello.CalculatorServer,,[com.bigfatplayer.hello.Calculator$Iface],[],org.apache.log4j.NameValue,,,nonexistent,nonexistent,nonexistent,nonexistent,org.apache.log4j.NameValue,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+14,3,../replication_package/raw_data/urldd9e4ada6f_kirillF_sample_jenkins_project_tgz-pJ8-com_bigfatplayer_hello_AppJ8/wala0cfa.csv,2648,com/bigfatplayer/hello/CalculatorServer.calculate:(ILcom/bigfatplayer/hello/Work;)I,org/apache/log4j/Priority.equals:(Ljava/lang/Object;)Z,"@Override
+public int calculate(int log_id, Work w) throws TException {
+    System.out.println(log_id);
+    return w.getNum1() + w.getNum2();
+}","class Priority { boolean equals ( Object a0, ) { return boolean1; }",0,1,0,FALSE,equals,0,0,FALSE,com.bigfatplayer.hello.CalculatorServer,,[com.bigfatplayer.hello.Calculator$Iface],[],org.apache.log4j.Priority,,,nonexistent,nonexistent,nonexistent,nonexistent,org.apache.log4j.Priority,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+15,4,../replication_package/raw_data/urld558a3d988_gao715108023_resourceMonitor_tgz-pJ8-com_sinopec_agent_AgentJ8/wala0cfa.csv,13,com/sinopec/agent/infocollect/DynamicMemInfo.getMemInfoFromProc:()V,org/apache/commons/logging/LogConfigurationException.getCause:()Ljava/lang/Throwable;,"public void getMemInfoFromProc() {
+    int totalMem = 0;
+    int freeMem = 0;
+    int usedMem = 0;
+    FileReader reader = null;
+    BufferedReader br = null;
+    try {
+        reader = new FileReader(""/proc/meminfo"");
+        br = new BufferedReader(reader);
+        String str = null;
+        while ((str = br.readLine()) != null) {
+            StringBuilder sbb = new StringBuilder();
+            char c = ' ';
+            for (int i = 0; i < str.length(); i++) {
+                char ch = str.charAt(i);
+                if (ch != c) {
+                    sbb.append(ch);
+                }
+            }
+            str = sbb.toString();
+            String[] a = str.split("":"");
+            if (a[0].equals(""MemTotal"")) {
+                Matcher m = Pattern.compile(""\\d+"").matcher(a[1]);
+                while (m.find()) {
+                    totalMem = totalMem + Integer.parseInt(m.group(0));
+                    totalMem = totalMem / 1024;
+                }
+            }
+            if (a[0].equals(""MemFree"")) {
+                Matcher m = Pattern.compile(""\\d+"").matcher(a[1]);
+                while (m.find()) {
+                    freeMem = freeMem + Integer.parseInt(m.group(0));
+                    freeMem = freeMem / 1024;
+                }
+            }
+            usedMem = totalMem - freeMem;
+        }
+        SharedArea.dynamicInfoSerializable.setTotalMemory(totalMem);
+        SharedArea.dynamicInfoSerializable.setUsedMemory(usedMem);
+        SharedArea.dynamicInfoSerializable.setIdleMemory(freeMem);
+    } catch (FileNotFoundException e) {
+        LOG.error(LogUtils.getTrace(e));
+    } catch (IOException e) {
+        LOG.error(LogUtils.getTrace(e));
+    } finally {
+        try {
+            if (br != null)
+                br.close();
+            if (reader != null)
+                reader.close();
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+}",class LogConfigurationException { Throwable getCause ( ) { return Throwable1; },0,1,0,FALSE,getCause,0,0,FALSE,com.sinopec.agent.infocollect.DynamicMemInfo,,[java.lang.Runnable],[],org.apache.commons.logging.LogConfigurationException,,,nonexistent,nonexistent,nonexistent,nonexistent,org.apache.commons.logging.LogConfigurationException,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+16,4,../replication_package/raw_data/urld558a3d988_gao715108023_resourceMonitor_tgz-pJ8-com_sinopec_agent_AgentJ8/wala0cfa.csv,224,com/sinopec/agent/infocollect/DynamicCPUInfo.run:()V,com/sinopec/agent/infocollect/DynamicCPUInfo.convertToCPUInfo:()V,"@Override
+public void run() {
+    while (running) {
+        try {
+            convertToCPUInfo();
+            try {
+                Thread.sleep(samplingInterval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+}","public void convertToCPUInfo() throws IOException {
+    float userTime = 0;
+    float niceTime = 0;
+    float systemTime = 0;
+    float iowaitTime = 0;
+    float idleTime = 0;
+    StringBuffer allUserTime = new StringBuffer();
+    StringBuffer allNiceTime = new StringBuffer();
+    StringBuffer allSystemTime = new StringBuffer();
+    StringBuffer allIowaitTime = new StringBuffer();
+    StringBuffer allIdleTime = new StringBuffer();
+    Map<String, double[]> mapB = getInfoFromStat();
+    try {
+        Thread.sleep(500);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    Map<String, double[]> mapA = getInfoFromStat();
+    Iterator<Map.Entry<String, double[]>> iterA = mapA.entrySet().iterator();
+    Iterator<Map.Entry<String, double[]>> iterB = mapB.entrySet().iterator();
+    while (iterA.hasNext() && iterB.hasNext()) {
+        Map.Entry<String, double[]> entryA = iterA.next();
+        Map.Entry<String, double[]> entryB = iterB.next();
+        if (entryA.getKey().equals(""cpu"")) {
+            double[] buffer = calculateCPUInfo(entryA, entryB);
+            userTime = (float) buffer[0];
+            niceTime = (float) buffer[1];
+            systemTime = (float) buffer[2];
+            idleTime = (float) buffer[3];
+            iowaitTime = (float) buffer[4];
+        } else {
+            double[] buffer = calculateCPUInfo(entryA, entryB);
+            allUserTime.append(String.valueOf(buffer[0]));
+            allUserTime.append(""@@"");
+            allNiceTime.append(String.valueOf(buffer[1]));
+            allNiceTime.append(""@@"");
+            allSystemTime.append(String.valueOf(buffer[2]));
+            allSystemTime.append(""@@"");
+            allIdleTime.append(String.valueOf(buffer[3]));
+            allIdleTime.append(""@@"");
+            allIowaitTime.append(String.valueOf(buffer[4]));
+            allIowaitTime.append(""@@"");
+        }
+    }
+    SharedArea.dynamicInfoSerializable.setUserTime(userTime);
+    SharedArea.dynamicInfoSerializable.setNiceTime(niceTime);
+    SharedArea.dynamicInfoSerializable.setSystemTime(systemTime);
+    SharedArea.dynamicInfoSerializable.setIowaitTime(iowaitTime);
+    SharedArea.dynamicInfoSerializable.setIdleTime(idleTime);
+    SharedArea.dynamicInfoSerializable.setAllUserTime(allUserTime.toString().substring(0, allUserTime.length() - 2));
+    SharedArea.dynamicInfoSerializable.setAllNiceTime(allNiceTime.toString().substring(0, allNiceTime.length() - 2));
+    SharedArea.dynamicInfoSerializable.setAllSystemTime(allSystemTime.toString().substring(0, allSystemTime.length() - 2));
+    SharedArea.dynamicInfoSerializable.setAllIowaitTime(allIowaitTime.toString().substring(0, allIowaitTime.length() - 2));
+    SharedArea.dynamicInfoSerializable.setAllIdleTime(allIdleTime.toString().substring(0, allIdleTime.length() - 2));
+}",1,1,1,TRUE,convertToCPUInfo,1,1,FALSE,com.sinopec.agent.infocollect.DynamicCPUInfo,,[java.lang.Runnable],[],com.sinopec.agent.infocollect.DynamicCPUInfo,[java.lang.Runnable],[],convertToCPUInfo();,this,com.sinopec.agent.infocollect.DynamicCPUInfo,com.sinopec.agent.infocollect.DynamicCPUInfo,com.sinopec.agent.infocollect.DynamicCPUInfo,YES,"The funcname of method y is 'convertToCPUInfo', so the invocation_line in method x is 'convertToCPUInfo();'. Analyzing 'convertToCPUInfo();,' we deduce that the receiver object is 'this'. Thus, the runtime type of the receiver object is class_A[com.sinopec.agent.infocollect.DynamicCPUInfo] matching class_B. As a result, the 'run()' method invokes the 'convertToCPUInfo()' method."
+17,4,../replication_package/raw_data/urld558a3d988_gao715108023_resourceMonitor_tgz-pJ8-com_sinopec_agent_AgentJ8/wala0cfa.csv,538,com/sinopec/agent/infocollect/DynamicProcessInfo.run:()V,com/sinopec/agent/infocollect/DynamicProcessInfo.getProcessInfoFromProc:()V,"@Override
+public void run() {
+    while (running) {
+        getProcessInfoFromProc();
+        try {
+            Thread.sleep(samplingInterval);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}",class DynamicProcessInfo { void getProcessInfoFromProc ( ) { return void1; },1,1,1,TRUE,getProcessInfoFromProc,1,1,FALSE,com.sinopec.agent.infocollect.DynamicProcessInfo,,[java.lang.Runnable],[],com.sinopec.agent.infocollect.DynamicProcessInfo,[java.lang.Runnable],[],getProcessInfoFromProc();,this,DynamicProcessInfo,DynamicProcessInfo,com.sinopec.agent.infocollect.DynamicProcessInfo,YES,"My goal is to find the `getProcessInfoFromProc` method of the class `DynamicProcessInfo` within the `run` function. While reading the code lines of the `run` function, I found ""getProcessInfoFromProc();"" which calls the method. The receiver object is implicitly `this`, and both its declared type and runtime type are the class where method `x` resides, which is `DynamicProcessInfo`."
+18,4,../replication_package/raw_data/urld558a3d988_gao715108023_resourceMonitor_tgz-pJ8-com_sinopec_agent_AgentJ8/wala0cfa.csv,672,com/sinopec/agent/infocollect/DynamicCPUInfo.run:()V,com/sinopec/utils/LogUtils.getTrace:(Ljava/lang/Throwable;)Ljava/lang/String;,"@Override
+public void run() {
+    while (running) {
+        try {
+            convertToCPUInfo();
+            try {
+                Thread.sleep(samplingInterval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+}","class LogUtils { String getTrace ( Throwable a0, ) { return String1; }",1,1,0,TRUE,getTrace,1,1,FALSE,com.sinopec.agent.infocollect.DynamicCPUInfo,,[java.lang.Runnable],[],com.sinopec.utils.LogUtils,[],[],LOG.error(LogUtils.getTrace(e));,LogUtils,LogUtils,LogUtils,com.sinopec.utils.LogUtils,YES,"My goal is to find the `getTrace` method of the class `LogUtils` within the `run` function. While reading the code lines of the `run` function, I found ""LOG.error(LogUtils.getTrace(e));"" which calls the method inside the `LOG.error` method. The receiver object is the static class `LogUtils`, and both its declared type and runtime type are the class itself, which is `LogUtils`."
+19,4,../replication_package/raw_data/urld558a3d988_gao715108023_resourceMonitor_tgz-pJ8-com_sinopec_agent_AgentJ8/wala0cfa.csv,941,com/sinopec/agent/infocollect/DynamicDiskIOInfo.getDiskIOInfoByCmd:()V,com/sinopec/agent/infocollect/DynamicDiskIOInfo.run:()V,"public void getDiskIOInfoByCmd() {
+    double ioTs = 0;
+    double readSpeed = 0;
+    double readKB = 0;
+    double writeSpeed = 0;
+    double writeKB = 0;
+    List<String> diskNameList = getDiskNameByFile();
+    String commond = ""iostat -d -k"";
+    BufferedInputStream bis = null;
+    BufferedReader br = null;
+    Runtime runtime = Runtime.getRuntime();
+    try {
+        Process p = runtime.exec(commond);
+        bis = new BufferedInputStream(p.getInputStream());
+        br = new BufferedReader(new InputStreamReader(bis));
+        String lineStr;
+        while ((lineStr = br.readLine()) != null) {
+            lineStr = lineStr.trim().replaceAll("" {2,}"", "" "");
+            String[] array = lineStr.split("" "");
+            if (diskNameList.contains(array[0])) {
+                ioTs += Double.parseDouble(array[1]);
+                readSpeed += Double.parseDouble(array[2]);
+                writeSpeed += Double.parseDouble(array[3]);
+                readKB += Double.parseDouble(array[4]);
+                writeKB += Double.parseDouble(array[5]);
+            }
+        }
+        readKB /= 1024;
+        writeKB /= 1024;
+        try {
+            if (p.waitFor() != 0) {
+                if (p.exitValue() == 1)
+                    LOG.error(""Command execution failed!"");
+            }
+        } catch (InterruptedException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    } catch (IOException e) {
+        LOG.error(LogUtils.getTrace(e));
+    } finally {
+        try {
+            if (br != null)
+                br.close();
+            if (bis != null)
+                bis.close();
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+    SharedArea.dynamicInfoSerializable.setIoTs((int) ioTs);
+    SharedArea.dynamicInfoSerializable.setReadKB((int) readKB);
+    SharedArea.dynamicInfoSerializable.setReadSpeed((int) readSpeed);
+    SharedArea.dynamicInfoSerializable.setWriteKB((int) writeKB);
+    SharedArea.dynamicInfoSerializable.setWriteSpeed((int) writeSpeed);
+}","@Override
+public void run() {
+    while (running) {
+        getDiskIOInfoByCmd();
+        try {
+            Thread.sleep(samplingInterval);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}",0,1,0,TRUE,run,0,0,FALSE,com.sinopec.agent.infocollect.DynamicDiskIOInfo,,[java.lang.Runnable],[],com.sinopec.agent.infocollect.DynamicDiskIOInfo,[java.lang.Runnable],[],nonexistent,nonexistent,nonexistent,nonexistent,com.sinopec.agent.infocollect.DynamicDiskIOInfo,YES,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+20,5,../replication_package/raw_data/url72c32f3c54_Quickhull3d_quickhull3d_tgz-pJ8-com_github_quickhull3d_SimpleExampleJ8/wala0cfa.csv,9,com/github/quickhull3d/QuickHull3D.buildHull:()V,com/github/quickhull3d/QuickHull3D.createInitialSimplex:()V,"protected void buildHull() {
+    int cnt = 0;
+    Vertex eyeVtx;
+    computeMaxAndMin();
+    createInitialSimplex();
+    while ((eyeVtx = nextPointToAdd()) != null) {
+        addPointToHull(eyeVtx);
+        cnt++;
+        LOG.debug(""iteration "" + cnt + "" done"");
+    }
+    reindexFacesAndVertices();
+    LOG.debug(""hull done"");
+}","protected void createInitialSimplex() throws IllegalArgumentException {
+    double max = 0;
+    int imax = 0;
+    for (int i = 0; i < 3; i++) {
+        double diff = maxVtxs[i].pnt.get(i) - minVtxs[i].pnt.get(i);
+        if (diff > max) {
+            max = diff;
+            imax = i;
+        }
+    }
+    if (max <= tolerance) {
+        throw new IllegalArgumentException(""Input points appear to be coincident"");
+    }
+    Vertex[] vtx = new Vertex[4];
+    vtx[0] = maxVtxs[imax];
+    vtx[1] = minVtxs[imax];
+    Vector3d u01 = new Vector3d();
+    Vector3d diff02 = new Vector3d();
+    Vector3d nrml = new Vector3d();
+    Vector3d xprod = new Vector3d();
+    double maxSqr = 0;
+    u01.sub(vtx[1].pnt, vtx[0].pnt);
+    u01.normalize();
+    for (int i = 0; i < numPoints; i++) {
+        diff02.sub(pointBuffer[i].pnt, vtx[0].pnt);
+        xprod.cross(u01, diff02);
+        double lenSqr = xprod.normSquared();
+        if ( 
+        lenSqr > maxSqr && pointBuffer[i] != vtx[0] && pointBuffer[i] != vtx[1]) {
+            maxSqr = lenSqr;
+            vtx[2] = pointBuffer[i];
+            nrml.set(xprod);
+        }
+    }
+    if (Math.sqrt(maxSqr) <= 100 * tolerance) {
+        throw new IllegalArgumentException(""Input points appear to be colinear"");
+    }
+    nrml.normalize();
+    double maxDist = 0;
+    double d0 = vtx[2].pnt.dot(nrml);
+    for (int i = 0; i < numPoints; i++) {
+        double dist = Math.abs(pointBuffer[i].pnt.dot(nrml) - d0);
+        if ( 
+        dist > maxDist && pointBuffer[i] != vtx[0] && pointBuffer[i] != vtx[1] && pointBuffer[i] != vtx[2]) {
+            maxDist = dist;
+            vtx[3] = pointBuffer[i];
+        }
+    }
+    if (Math.abs(maxDist) <= 100 * tolerance) {
+        throw new IllegalArgumentException(""Input points appear to be coplanar"");
+    }
+    if (LOG.isDebugEnabled()) {
+        LOG.debug(""initial vertices:"");
+        LOG.debug(vtx[0].index + "": "" + vtx[0].pnt);
+        LOG.debug(vtx[1].index + "": "" + vtx[1].pnt);
+        LOG.debug(vtx[2].index + "": "" + vtx[2].pnt);
+        LOG.debug(vtx[3].index + "": "" + vtx[3].pnt);
+    }
+    Face[] tris = new Face[4];
+    if (vtx[3].pnt.dot(nrml) - d0 < 0) {
+        tris[0] = Face.createTriangle(vtx[0], vtx[1], vtx[2]);
+        tris[1] = Face.createTriangle(vtx[3], vtx[1], vtx[0]);
+        tris[2] = Face.createTriangle(vtx[3], vtx[2], vtx[1]);
+        tris[3] = Face.createTriangle(vtx[3], vtx[0], vtx[2]);
+        for (int i = 0; i < 3; i++) {
+            int k = (i + 1) % 3;
+            tris[i + 1].getEdge(1).setOpposite(tris[k + 1].getEdge(0));
+            tris[i + 1].getEdge(2).setOpposite(tris[0].getEdge(k));
+        }
+    } else {
+        tris[0] = Face.createTriangle(vtx[0], vtx[2], vtx[1]);
+        tris[1] = Face.createTriangle(vtx[3], vtx[0], vtx[1]);
+        tris[2] = Face.createTriangle(vtx[3], vtx[1], vtx[2]);
+        tris[3] = Face.createTriangle(vtx[3], vtx[2], vtx[0]);
+        for (int i = 0; i < 3; i++) {
+            int k = (i + 1) % 3;
+            tris[i + 1].getEdge(0).setOpposite(tris[k + 1].getEdge(1));
+            tris[i + 1].getEdge(2).setOpposite(tris[0].getEdge((3 - i) % 3));
+        }
+    }
+    for (int i = 0; i < 4; i++) {
+        faces.add(tris[i]);
+    }
+    for (int i = 0; i < numPoints; i++) {
+        Vertex v = pointBuffer[i];
+        if (v == vtx[0] || v == vtx[1] || v == vtx[2] || v == vtx[3]) {
+            continue;
+        }
+        maxDist = tolerance;
+        Face maxFace = null;
+        for (int k = 0; k < 4; k++) {
+            double dist = tris[k].distanceToPlane(v.pnt);
+            if (dist > maxDist) {
+                maxFace = tris[k];
+                maxDist = dist;
+            }
+        }
+        if (maxFace != null) {
+            addPointToFace(v, maxFace);
+        }
+    }
+}",1,1,1,TRUE,createInitialSimplex,1,1,FALSE,com.github.quickhull3d.QuickHull3D,"protected com.github.quickhull3d.Vertex[] pointBuffer;, protected java.util.Vector faces;, protected java.util.Vector horizon;",[],[],com.github.quickhull3d.QuickHull3D,[],[],createInitialSimplex();,this,com.github.quickhull3d.QuickHull3D,com.github.quickhull3d.QuickHull3D,com.github.quickhull3d.QuickHull3D,YES,"The receiver object is 'this'. The runtime type of the receiver object is class_A[com.github.quickhull3d.QuickHull3D], which is the same as class_B. So method buildHull() invokes method createInitialSimplex()."
+21,5,../replication_package/raw_data/url72c32f3c54_Quickhull3d_quickhull3d_tgz-pJ8-com_github_quickhull3d_SimpleExampleJ8/wala0cfa.csv,96,com/github/quickhull3d/Face.computeCentroid:(Lcom/github/quickhull3d/Point3d;)V,com/github/quickhull3d/Vector3d.setZero:()V,"public void computeCentroid(Point3d centroid) {
+    centroid.setZero();
+    HalfEdge he = he0;
+    do {
+        centroid.add(he.head().pnt);
+        he = he.next;
+    } while (he != he0);
+    centroid.scale(1 / (double) numVerts);
+}","public void setZero() {
+    x = 0;
+    y = 0;
+    z = 0;
+}",1,1,1,TRUE,setZero,1,1,FALSE,com.github.quickhull3d.Face,"protected com.github.quickhull3d.HalfEdge he0;, protected com.github.quickhull3d.Face next;, protected com.github.quickhull3d.Vertex outside;",[],[],com.github.quickhull3d.Vector3d,[],[com.github.quickhull3d.Point3d],centroid.setZero();,centroid,Point3d,unknown,com.github.quickhull3d.Vector3d,YES,"The funcname of method y is 'setZero', so the invocation_line is 'centroid.setZero();' in method x. Considering the declaration 'Point3d centroid' in method x, the declared type of receiver object 'centroid' is Point3D, which is a descendant of class B[com.github.quickhull3d.Vector3d]. So it's likely that method x[Face.computeCentroid(Point3d centroid)] invokes method y[Vector3d.setZero()]."
+22,6,../replication_package/raw_data/urlc98c3b97d2_Trimax_venta_tgz-pJ8-com_gesoftware_venta_structures_map_MapTestJ8/wala0cfa.csv,1,com/gesoftware/venta/network/Server.openServerSocket:()Z,com/gesoftware/venta/network/Server$Client.equals:(Ljava/lang/Object;)Z,"private boolean openServerSocket() {
+    try {
+        m_ServerSocket = new ServerSocket(m_Port);
+        LoggingUtility.core(""Server started using port: "" + m_Port);
+        return true;
+    } catch (final IOException e) {
+        LoggingUtility.error(""Can't listen using port: "" + m_Port);
+    } catch (final Exception e) {
+        LoggingUtility.error(""Can't listen using port: "" + m_Port);
+    }
+    return false;
+}","@Override
+public final boolean equals(final Object o) {
+    return o instanceof Client && ((Client) o).getID().equals(m_ID);
+}",0,1,0,FALSE,equals,0,0,FALSE,com.gesoftware.venta.network.Server,,[com.gesoftware.venta.network.IServer][java.lang.Runnable],[],com.gesoftware.venta.network.Server$Client,[],[],nonexistent,nonexistent,nonexistent,nonexistent,com.gesoftware.venta.network.Server$Client,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+23,6,../replication_package/raw_data/urlc98c3b97d2_Trimax_venta_tgz-pJ8-com_gesoftware_venta_structures_map_MapTestJ8/wala0cfa.csv,62,com/gesoftware/venta/utility/HashUtility.generateHash:(Ljava/lang/String;)Ljava/lang/String;,com/gesoftware/venta/utility/HashUtility.getHash:(Ljava/lang/String;)Ljava/lang/String;,"public static String generateHash(final String string) {
+    try {
+        return getHash(string);
+    } catch (final NoSuchAlgorithmException e) {
+        LoggingUtility.error(""Can't calculate hash by string: "" + string);
+    } catch (final UnsupportedEncodingException e) {
+        LoggingUtility.error(""Can't calculate hash by string: "" + string);
+    }
+    return null;
+}","private static String getHash(final String text) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    final MessageDigest md = MessageDigest.getInstance(""SHA-1"");
+    md.update(text.getBytes(""UTF-8""), 0, text.length());
+    return convertToHex(md.digest());
+}",1,1,1,TRUE,getHash,1,1,TRUE,com.gesoftware.venta.utility.HashUtility,,[],[],com.gesoftware.venta.utility.HashUtility,[],[],return getHash(string);,this,HashUtility,HashUtility,com.gesoftware.venta.utility.HashUtility,YES,"My goal is to find the `getHash` method of the class `HashUtility` within the `generateHash` function. While reading the code lines of the `generateHash` function, I found ""return getHash(string);"" which calls the `getHash` method. The receiver object is implicitly `this`, and both its declared type and runtime type are the class where method `x` resides, which is `HashUtility`."
+24,6,../replication_package/raw_data/urlc98c3b97d2_Trimax_venta_tgz-pJ8-com_gesoftware_venta_structures_map_MapTestJ8/wala0cfa.csv,63,com/gesoftware/venta/actors/Theater.<init>:(I)V,com/gesoftware/venta/network/Server.<init>:(ILcom/gesoftware/venta/network/handlers/IServerHandler;)V,"public Theater(final int port) {
+    m_Server = new Server(port, new ServerHandler());
+}","public Server(final int port, final IServerHandler handler) {
+    m_ServerHandler = handler;
+    m_Port = port;
+}",1,1,1,TRUE,Server,1,1,FALSE,com.gesoftware.venta.actors.Theater,,[java.lang.Runnable],[],com.gesoftware.venta.network.Server,[com.gesoftware.venta.network.IServer][java.lang.Runnable],[],"m_Server = new Server(port, new ServerHandler());",Server,Server,Server,com.gesoftware.venta.network.Server,YES,"It's evident that the `Theater` method calls the constructor of `Server`, hence inferring the `receiver object` as `Server`, with both the declared type and inferred type being `Server`."
+25,6,../replication_package/raw_data/urlc98c3b97d2_Trimax_venta_tgz-pJ8-com_gesoftware_venta_structures_map_MapTestJ8/wala0cfa.csv,125,com/gesoftware/venta/network/Server.run:()V,com/gesoftware/venta/network/Server$Client.<init>:(Lcom/gesoftware/venta/network/Server;Ljava/net/Socket;)V,"@Override
+public final void run() {
+    if (!openServerSocket())
+        return;
+    new Thread(new Observer()).start();
+    while (m_IsActive) {
+        final Socket clientSocket = acceptConnection();
+        if (clientSocket != null) {
+            final Client client = new Client(clientSocket);
+            LoggingUtility.core(""Client connected from: "" + clientSocket.getInetAddress().getHostAddress());
+            if (m_ServerHandler.onConnect(client.getID(), clientSocket.getInetAddress())) {
+                LoggingUtility.core(""Client approved with ID: "" + client.getID());
+                client.start();
+                addClient(client);
+            } else
+                closeConnection(clientSocket);
+        }
+    }
+}","class Server$Client { void Server ( Server a0, Socket a1, ) { return void1; }",1,1,1,FALSE,Server$Client,1,1,FALSE,com.gesoftware.venta.network.Server,,[com.gesoftware.venta.network.IServer][java.lang.Runnable],[],com.gesoftware.venta.network.Server$Client,[],[],final Client client = new Client(clientSocket);,Client,Client,Client,com.gesoftware.venta.network.Server$Client,YES,"My goal is to find the constructor of the inner class `Client` within the `run` function. By scanning the code of the `run()` method, I found the line ""final Client client = new Client(clientSocket);"" which calls the constructor of `Client`. In this `invocation_line`, the receiver object is `Client`, with both the declared type and inferred type being `Client`."
+26,7,../replication_package/raw_data/urlac20d257ff_zhongdj_Madz_Stochastic_tgz-pJ8-net_madz_test_stochastic_core_impl_DynamicDemoJ8/wala0cfa.csv,181,net/madz/test/stochastic/core/impl/DynamicDemo.main:([Ljava/lang/String;)V,org/apache/poi/hpsf/Section$PropertyListEntry.compareTo:(Ljava/lang/Object;)I,"public static void main(String[] args) {
+    final Method[] declaredMethods = DynamicDemo.class.getDeclaredMethods();
+    for (final Method m : declaredMethods) {
+        if (m.getAnnotation(DynamicCase.class) == null) {
+            continue;
+        }
+        DynamicCase dynamicCase = m.getAnnotation(DynamicCase.class);
+        new Processor().doProcess(new DefaultTestContext(null, DynamicDemo.class, m, null), new GlobalDimensionBasedDynamicCase(dynamicCase));
+    }
+}","class Section$PropertyListEntry { int compareTo ( Object a0, ) { return int1; }",0,1,0,FALSE,compareTo,0,0,FALSE,net.madz.test.stochastic.core.impl.DynamicDemo,,[],[],org.apache.poi.hpsf.Section$PropertyListEntry,,,nonexistent,nonexistent,nonexistent,nonexistent,org.apache.poi.hpsf.Section$PropertyListEntry,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+28,7,../replication_package/raw_data/urlac20d257ff_zhongdj_Madz_Stochastic_tgz-pJ8-net_madz_test_stochastic_core_impl_DynamicDemoJ8/wala0cfa.csv,10050,net/madz/test/stochastic/core/GlobalTestContext.clearLocalVariables:()V,net/madz/test/stochastic/core/DynamicCaseContext.clearLocalVariables:()V,"public void clearLocalVariables() {
+    DynamicCaseContext.clearLocalVariables();
+}","public static void clearLocalVariables() {
+    localVariables.remove();
+}",1,1,1,TRUE,clearLocalVariables,1,1,TRUE,net.madz.test.stochastic.core.GlobalTestContext,"public static final java.lang.String ASSERT_FUNCTIONS_PREFIX;, public static final java.lang.String SDFC_CUSTOM_OBJECT_PREFIX;, public static final java.lang.String SFDC_CUSTOM_SETTING_PREFIX;, public static final java.lang.String GLOABLE_FUNCTION_PREFIX;, public static final java.lang.String CUSTOM_FUNCTION_PREFIX;, public static final net.madz.test.stochastic.core.GlobalTestContext INSTANCE;",[],[],net.madz.test.stochastic.core.DynamicCaseContext,[],[],DynamicCaseContext.clearLocalVariables();,DynamicCaseContext,DynamicCaseContext,DynamicCaseContext,net.madz.test.stochastic.core.DynamicCaseContext,YES,"Clearly, the method `clearLocalVariables` calls the static method `clearLocalVariables` of the class `DynamicCaseContext`. I infer that the receiver object is `DynamicCaseContext`, with both the declared type and inferred type being `DynamicCaseContext`."
+29,8,../replication_package/raw_data/urlaf0069908d_AlexanderAndreev_Parking_tgz-pJ8-com_andreev_parking_controller_RunnerJ8/wala0cfa.csv,11,com/andreev/parking/model/factory/ParkingPlaceFactory.newParkingPlace:(I)Lcom/andreev/parking/model/ParkingPlace;,com/andreev/parking/model/ParkingPlace.setId:(I)V,"public ParkingPlace newParkingPlace(int id) throws ParkingException {
+    ParkingPlace place = new ParkingPlace();
+    place.setId(id);
+    return place;
+}","public void setId(int id) throws ParkingException {
+    if (id < 0) {
+        throw new ParkingException(""Id is under zero"");
+    }
+    this.id = id;
+}",1,1,1,TRUE,setId,1,1,FALSE,com.andreev.parking.model.factory.ParkingPlaceFactory,,[],[],com.andreev.parking.model.ParkingPlace,[],[],place.setId(id);,place,ParkingPlace,ParkingPlace,com.andreev.parking.model.ParkingPlace,YES,"My goal is to find the `setId` method of the class `ParkingPlace` within the method `newParkingPlace()`. By scanning the code of the `newParkingPlace()` method, I found the line ""place.setId(id);"" which calls the `setId` method, where the receiver object is `place`. In the line of code above it, ""ParkingPlace place = new ParkingPlace();"", it can be inferred that the actual runtime type of `place` is `ParkingPlace`. Therefore, this calling relationship is YES."
+30,8,../replication_package/raw_data/urlaf0069908d_AlexanderAndreev_Parking_tgz-pJ8-com_andreev_parking_controller_RunnerJ8/wala0cfa.csv,64,com/andreev/parking/model/ParkingPlacePool.releaseItem:(Lcom/andreev/parking/model/ParkingPlace;)Z,org/apache/log4j/CategoryKey.hashCode:()I,"private boolean releaseItem(ParkingPlace place) {
+    LOCK.lock();
+    try {
+        int index = PLACES.indexOf(place);
+        if (index == -1) {
+            return false;
+        }
+        if (PLACES.get(index).isUsed()) {
+            place.togleUsed();
+            return true;
+        }
+    } finally {
+        LOCK.unlock();
+    }
+    return false;
+}",class CategoryKey { int hashCode ( ) { return int1; },0,1,0,FALSE,hashCode,0,0,FALSE,com.andreev.parking.model.ParkingPlacePool,,[],[],org.apache.log4j.CategoryKey,,,nonexistent,nonexistent,nonexistent,nonexistent,org.apache.log4j.CategoryKey,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+31,8,../replication_package/raw_data/urlaf0069908d_AlexanderAndreev_Parking_tgz-pJ8-com_andreev_parking_controller_RunnerJ8/wala0cfa.csv,96,com/andreev/parking/controller/Runner.main:([Ljava/lang/String;)V,org/apache/log4j/Category.fatal:(Ljava/lang/Object;Ljava/lang/Throwable;)V,"public static void main(String[] args) {
+    try {
+        List<Parking> parkings = new ParkingGenerator().generateParkingList(50, 10);
+        ParkingList.getInstence().addParking(parkings);
+        List<Car> cars = new CarGenerator().generateCars(3000);
+        CarExecuter executer = new CarExecuter();
+        executer.execute(cars);
+    } catch (ParkingException e) {
+        LOG.fatal(""Fatal"", e);
+    } catch (CarException e) {
+        LOG.fatal(""Fatal"", e);
+    }
+}","class Category { void fatal ( Object a0, Throwable a1, ) { return void1; }",1,1,0,TRUE,fatal,1,1,FALSE,com.andreev.parking.controller.Runner,,[],[],org.apache.log4j.Category,,,"LOG.fatal(""Fatal"", e);",LOG,LOG,LOG,org.apache.log4j.Category,YES,"My goal is to find the `fatal` method of the `Category` class within the `main()` function. By reading the code of the `main()` function, I found the line ""LOG.fatal(""Fatal"", e);"" which calls the `fatal` method of `LOG`. In this `invocation_line`, the receiver object is `LOG`, and both the declared type and inferred type are `LOG`. From the context, it's not apparent how `LOG` is related to the `Category` class. However, considering that the project uses log4j, I boldly speculate that there is a strong association between `LOG` and the `Category` class. Therefore, even though the runtime type of `LOG` may not match the class `Category`, I still believe this calling relationship is reasonable."
+32,8,../replication_package/raw_data/urlaf0069908d_AlexanderAndreev_Parking_tgz-pJ8-com_andreev_parking_controller_RunnerJ8/wala0cfa.csv,180,com/andreev/parking/model/Car.setId:(I)V,com/andreev/parking/model/exception/CarException.<init>:(Ljava/lang/String;)V,"public void setId(int id) throws CarException {
+    if (id < 0) {
+        throw new CarException(""Id is under zero"");
+    }
+    this.id = id;
+}","public CarException(String message) {
+    super(message);
+}",1,1,0,TRUE,CarException,1,1,FALSE,com.andreev.parking.model.Car,,[java.lang.Runnable],[],com.andreev.parking.model.exception.CarException,[java.lang.Exception],[com.andreev.parking.model.exception.ParkingException],"throw new CarException(""Id is under zero"");",CarException,CarException,CarException,com.andreev.parking.model.exception.CarException,YES,"Clearly, the code line ""throw new CarException(""Id is under zero"");"" calls the constructor of `CarException`."
+33,9,../replication_package/raw_data/url89cafed56a_AlexDiru_esper_compiler_final_tgz-pJ8-compiler_ProgramJ8/wala0cfa.csv,36,compiler/EsperLexer.mLESSTHAN:()V,org/antlr/runtime/Lexer.match:(Ljava/lang/String;)V,"public final void mLESSTHAN() throws RecognitionException {
+    try {
+        int _type = LESSTHAN;
+        int _channel = DEFAULT_TOKEN_CHANNEL;
+        {
+            match(""lt"");
+        }
+        state.type = _type;
+        state.channel = _channel;
+    } finally {
+    }
+}","class Lexer { void match ( String a0, ) { return void1; }",1,1,0,TRUE,match,1,1,FALSE,compiler.EsperLexer,"protected compiler.EsperLexer$DFA7 dfa7;, static final java.lang.String DFA7_eotS;, static final java.lang.String DFA7_eofS;, static final java.lang.String DFA7_minS;, static final java.lang.String DFA7_maxS;, static final java.lang.String DFA7_acceptS;, static final java.lang.String DFA7_specialS;, static final java.lang.String[] DFA7_transitionS;",[org.antlr.runtime.Lexer],[],org.antlr.runtime.Lexer,[],[compiler.EsperLexer]," match(""""lt"""");",unknown,unknown,unknown,org.antlr.runtime.Lexer,YES,"My goal is to find the `match` method of the `Lexer` class within the `mLESSTHAN` function. While reading the code lines of the `mLESSTHAN` function, I found ""{ match(""lt""); }"" which calls the static method `match()`, with an unknown receiver object. However, static method calls typically are always right, so I believe this method invocation is YES."
+34,9,../replication_package/raw_data/url89cafed56a_AlexDiru_esper_compiler_final_tgz-pJ8-compiler_ProgramJ8/wala0cfa.csv,65,compiler/EsperLexer.mIDENTIFIER:()V,org/antlr/runtime/Lexer.matchRange:(II)V,"public final void mIDENTIFIER() throws RecognitionException {
+    try {
+        int _type = IDENTIFIER;
+        int _channel = DEFAULT_TOKEN_CHANNEL;
+        {
+            matchRange('a', 'z');
+            loop5: do {
+                int alt5 = 3;
+                int LA5_0 = input.LA(1);
+                if (((LA5_0 >= 'a' && LA5_0 <= 'z'))) {
+                    alt5 = 1;
+                } else if ((LA5_0 == '-' || (LA5_0 >= '0' && LA5_0 <= '9'))) {
+                    alt5 = 2;
+                }
+                switch(alt5) {
+                    case 1:
+                        {
+                            matchRange('a', 'z');
+                        }
+                        break;
+                    case 2:
+                        {
+                            mDIGITS();
+                        }
+                        break;
+                    default:
+                        break loop5;
+                }
+            } while (true);
+        }
+        state.type = _type;
+        state.channel = _channel;
+    } finally {
+    }
+}","class Lexer { void matchRange ( int a0, int a1, ) { return void1; }",1,1,0,TRUE,matchRange,1,1,FALSE,compiler.EsperLexer,"protected compiler.EsperLexer$DFA7 dfa7;, static final java.lang.String DFA7_eotS;, static final java.lang.String DFA7_eofS;, static final java.lang.String DFA7_minS;, static final java.lang.String DFA7_maxS;, static final java.lang.String DFA7_acceptS;, static final java.lang.String DFA7_specialS;, static final java.lang.String[] DFA7_transitionS;",[org.antlr.runtime.Lexer],[],org.antlr.runtime.Lexer,[],[compiler.EsperLexer],"matchRange('a', 'z');",unknown,unknown,unknown,org.antlr.runtime.Lexer,YES,"My goal is to find the `matchRange` method of the `Lexer` class within the `mIDENTIFIER` function. The code in the `mIDENTIFIER` function is wrapped in a large pair of curly braces, indicating a static call. Therefore, the line ""matchRange('a', 'z');"" calls the static method `matchRange()`, with an unknown receiver object. However, the callee being a static method call relationship is generally correct, so I believe this method invocation is YES."
+35,10,../replication_package/raw_data/urlfcb11f5f67_Orchaldir_FantasyWorldSimulation_tgz-pJ8-fws_worldeditor_WorldEditorJ8/wala0cfa.csv,1453,fws/world/WorldGenerationMap.generateElevation:()V,fws/world/generation/AddAlgorithms.update:()V,"public void generateElevation() {
+    elevation_algo_.update();
+    for (int x = 0; x < map_.getWidth(); x++) {
+        for (int y = 0; y < map_.getHeight(); y++) {
+            WorldGenerationCell cell = map_.getCell(x, y);
+            cell.setElevation(elevation_algo_.generate(x, y, cell));
+        }
+    }
+}","@Override
+public void update() {
+    for (GenerationAlgorithm<T> algorithm : algorithms_) {
+        algorithm.update();
+    }
+}",1,1,0,TRUE,update,1,1,FALSE,fws.world.WorldGenerationMap,,[],[],fws.world.generation.AddAlgorithms,,,elevation_algo_.update();,elevation_algo_,unknown,unknown,fws.world.generation.AddAlgorithms,YES,"My goal is to find the `update` method of the `AddAlgorithms` class within the `generateElevation()` function. By reading the code of the `generateElevation()` function, I found the line ""elevation_algo_.update();"" which calls the `update` method. In this `invocation_line`, the receiver object is `elevation_algo_`, with both the declared type and inferred type being unknown. From the semantics of `elevation_algo_`, it is likely an abbreviation for ""algo"" which could represent `Algorithms`, and `AddAlgorithms` is a type of `Algorithms`. Therefore, I speculate that this calling relationship is reasonable."
+36,10,../replication_package/raw_data/urlfcb11f5f67_Orchaldir_FantasyWorldSimulation_tgz-pJ8-fws_worldeditor_WorldEditorJ8/wala0cfa.csv,24346,fws/utility/state/StateMgr.setActive:(Ljava/lang/String;)Z,org/lwjgl/MemoryUtil$CharSequenceNT.charAt:(I)C,"public boolean setActive(String name) {
+    if (name == null)
+        throw new IllegalArgumentException(""name is null!"");
+    State state = states_.get(name);
+    if (state == null) {
+        return false;
+    } else if (state != active_state_) {
+        if (active_state_ != null) {
+            active_state_.onExit();
+        }
+        active_state_ = state;
+        active_state_.onEnter();
+    }
+    return true;
+}","class MemoryUtil$CharSequenceNT { char charAt ( int a0, ) { return char1; }",0,1,0,FALSE,charAt,0,0,FALSE,fws.utility.state.StateMgr,,[],[],org.lwjgl.MemoryUtil$CharSequenceNT,,,nonexistent,nonexistent,nonexistent,nonexistent,org.lwjgl.MemoryUtil$CharSequenceNT,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+37,10,../replication_package/raw_data/urlfcb11f5f67_Orchaldir_FantasyWorldSimulation_tgz-pJ8-fws_worldeditor_WorldEditorJ8/wala0cfa.csv,25111,fws/worldeditor/WorldEditor.resizeGL:()V,org/lwjgl/opengl/GL11.glMatrixMode:(I)V,"org/lwjgl/opengl/GL11.glMatrixMode:(I)V	""public void resizeGL() {
+    GL11.glViewport(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    GL11.glMatrixMode(GL_PROJECTION);
+    GL11.glLoadIdentity();
+    GL11.gluOrtho2D(0.0f, DISPLAY_WIDTH, 0.0f, DISPLAY_HEIGHT);
+    GL11.glPushMatrix();
+    GL11.glMatrixMode(GL_MODELVIEW);
+    GL11.glLoadIdentity();
+    GL11.glPushMatrix();
+}","class GL11 { void glMatrixMode ( int a0, ) { return void1; }",1,1,0,TRUE,glMatrixMode,1,1,FALSE,fws.worldeditor.WorldEditor,,[],[],org.lwjgl.opengl.GL11,,,GL11.glMatrixMode(GL_PROJECTION);,GL11,GL11,GL11,org.lwjgl.opengl.GL11,YES,"The code line ""GL11.glMatrixMode(GL_PROJECTION);"" calls the method `glMatrixMode`, where the actual receiver object is `GL11`, as `GL11` is a static class."
+38,11,../replication_package/raw_data/urld58fd5e7a9_longrm_weibo_robot_tgz-pJ8-weibo4j_org_json_TestJ8/wala0cfa.csv,38,weibo4j/org/json/JSONObject.getInt:(Ljava/lang/String;)I,weibo4j/org/json/JSONObject.get:(Ljava/lang/String;)Ljava/lang/Object;,"public int getInt(String key) throws JSONException {
+    Object o = get(key);
+    if (o == null)
+        return 0;
+    return o instanceof Number ? ((Number) o).intValue() : (int) getDouble(key);
+}","public Object get(String key) throws JSONException {
+    return opt(key);
+}",1,1,1,TRUE,get,1,1,FALSE,weibo4j.org.json.JSONObject,public static final java.lang.Object NULL;,[],[],weibo4j.org.json.JSONObject,[],[],Object o = get(key);,this,JSONObject,JSONObject,weibo4j.org.json.JSONObject,YES,"Clearly, ""Object o = get(key);"" calls the `get` method, where the receiver object is implicitly `this`. Based on the class where method `x` is located, I infer that both the declared type and inferred type are `JSONObject`. Therefore, the calling relationship is yes."
+39,11,../replication_package/raw_data/urld58fd5e7a9_longrm_weibo_robot_tgz-pJ8-weibo4j_org_json_TestJ8/wala0cfa.csv,74,weibo4j/org/json/Cookie.toString:(Lweibo4j/org/json/JSONObject;)Ljava/lang/String;,weibo4j/org/json/JSONObject.getString:(Ljava/lang/String;)Ljava/lang/String;,"public static String toString(JSONObject o) throws JSONException {
+    StringBuffer sb = new StringBuffer();
+    sb.append(escape(o.getString(""name"")));
+    sb.append(""="");
+    sb.append(escape(o.getString(""value"")));
+    if (o.has(""expires"")) {
+        sb.append("";expires="");
+        sb.append(o.getString(""expires""));
+    }
+    if (o.has(""domain"")) {
+        sb.append("";domain="");
+        sb.append(escape(o.getString(""domain"")));
+    }
+    if (o.has(""path"")) {
+        sb.append("";path="");
+        sb.append(escape(o.getString(""path"")));
+    }
+    if (o.optBoolean(""secure"")) {
+        sb.append("";secure"");
+    }
+    return sb.toString();
+}","public String getString(String key) throws JSONException {
+    Object o = get(key);
+    if (o == null)
+        return """";
+    return o.toString();
+}",1,1,1,TRUE,getString,1,1,FALSE,weibo4j.org.json.Cookie,,[],[],weibo4j.org.json.JSONObject,[],[],"sb.append(escape(o.getString(""""name"""")));",o,JSONObject,unknown,weibo4j.org.json.JSONObject,YES,"The code line ""sb.append(escape(o.getString(""name"")));"" involves three nested method calls. The innermost call ""o.getString(""name"")"" calls the `getString` method, where the receiver object is `o`. From the parameter ""JSONObject o"", we know its declared type is `JSONObject`, while its runtime type is unknown. Therefore, I speculate that this calling relationship is likely reasonable."
+40,11,../replication_package/raw_data/urld58fd5e7a9_longrm_weibo_robot_tgz-pJ8-weibo4j_org_json_TestJ8/wala0cfa.csv,422,weibo4j/org/json/JSONObject.stringToValue:(Ljava/lang/String;)Ljava/lang/Object;,weibo4j/org/json/JSONObject$Null.equals:(Ljava/lang/Object;)Z,"static public Object stringToValue(String s) {
+    if (s.equals("""")) {
+        return s;
+    }
+    if (s.equalsIgnoreCase(""true"")) {
+        return Boolean.TRUE;
+    }
+    if (s.equalsIgnoreCase(""false"")) {
+        return Boolean.FALSE;
+    }
+    if (s.equalsIgnoreCase(""null"")) {
+        return JSONObject.NULL;
+    }
+    char b = s.charAt(0);
+    if ((b >= '0' && b <= '9') || b == '.' || b == '-' || b == '+') {
+        if (b == '0') {
+            if (s.length() > 2 && (s.charAt(1) == 'x' || s.charAt(1) == 'X')) {
+                try {
+                    return new Integer(Integer.parseInt(s.substring(2), 16));
+                } catch (Exception e) {
+                }
+            } else {
+                try {
+                    return new Integer(Integer.parseInt(s, 8));
+                } catch (Exception e) {
+                }
+            }
+        }
+        try {
+            return new Integer(s);
+        } catch (Exception e) {
+            try {
+                return new Long(s);
+            } catch (Exception f) {
+                try {
+                    return new Double(s);
+                } catch (Exception g) {
+                }
+            }
+        }
+    }
+    return s;
+}","public boolean equals(Object object) {
+    return object == null || object == this;
+}",0,1,0,TRUE,equals,0,0,FALSE,weibo4j.org.json.JSONObject,public static final java.lang.Object NULL;,[],[],weibo4j.org.json.JSONObject$Null,[],[],nonexistent,nonexistent,nonexistent,nonexistent,weibo4j.org.json.JSONObject$Null,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+41,12,../replication_package/raw_data/url633772aa30_isma3l_Tp2_tgz-pJ8-ar_fiuba_tecnicas_framework_Pruebas_Casos1_MainJ8/wala0cfa.csv,8,ar/fiuba/tecnicas/framework/Pruebas/Casos1/AssertTest.assertArrayEqualsTest:()V,ar/fiuba/tecnicas/framework/JTest/Assert.assertArrayEquals:(Ljava/lang/String;[Ljava/lang/Object;[Ljava/lang/Object;)V,"public void assertArrayEqualsTest() {
+    Double[] list1 = { 1.2, 9.8, 4.6 };
+    Double[] list2 = { 1.2, 9.8, 4.6 };
+    Assert.assertArrayEquals(""Arrays have different value"", list1, list2);
+}","class Assert { void assertArrayEquals ( String a0, Object[] a1, Object[] a2, ) { return void1; }",1,1,1,TRUE,assertArrayEquals,1,1,FALSE,ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest,,[ar.fiuba.tecnicas.framework.JTest.TestCreator],[],ar.fiuba.tecnicas.framework.JTest.Assert,[],[ar.fiuba.tecnicas.framework.JTest.TestCase][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$1][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$10][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$2][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$3][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$4][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$5][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$6][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$7][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$8][ar.fiuba.tecnicas.framework.Pruebas.Casos1.AssertTest$9][ar.fiuba.tecnicas.framework.Pruebas.Casos1.SuiteATest$2][ar.fiuba.tecnicas.framework.Pruebas.Casos1.SuiteATest$3][ar.fiuba.tecnicas.framework.Pruebas.Casos1.SuiteATest$4][ar.fiuba.tecnicas.framework.Pruebas.Casos2.MyTestCase],"Assert.assertArrayEquals(""""Arrays have different value"""", list1, list2);",Assert,Assert,Assert,ar.fiuba.tecnicas.framework.JTest.Assert,YES,"Clearly, the code line ""Assert.assertArrayEquals(""Arrays have different value"", list1, list2);"" calls the static method `assertArrayEquals` of the class `Assert`, where the receiver object is `Assert`. Both the declared type and inferred type are `Assert`."
+42,12,../replication_package/raw_data/url633772aa30_isma3l_Tp2_tgz-pJ8-ar_fiuba_tecnicas_framework_Pruebas_Casos1_MainJ8/wala0cfa.csv,403,ar/fiuba/tecnicas/framework/JTest/XmlPrinter.addError:(Lar/fiuba/tecnicas/framework/JTest/Test;Ljava/lang/String;Ljava/lang/Throwable;)V,ar/fiuba/tecnicas/framework/JTest/XmlPrinter.printTestCaseWithError:(Lar/fiuba/tecnicas/framework/JTest/Test;Ljava/lang/String;Ljava/lang/Throwable;Ljava/lang/String;)V,"@Override
+public void addError(Test test, String time, Throwable throwable) {
+    printTestCaseWithError(test, time, throwable, ""error"");
+}","private void printTestCaseWithError(Test test, String time, Throwable throwable, String type) {
+    nameCase = test.toString();
+    this.time = time;
+    this.throwable = throwable;
+    printHeaderTestCase();
+    printContentException(type);
+    printAtribuesTestCase();
+}",1,1,0,TRUE,printTestCaseWithError,1,1,FALSE,ar.fiuba.tecnicas.framework.JTest.XmlPrinter,,[ar.fiuba.tecnicas.framework.JTest.TestListener],[],ar.fiuba.tecnicas.framework.JTest.XmlPrinter,[ar.fiuba.tecnicas.framework.JTest.TestListener],[],"printTestCaseWithError(test, time, throwable, """"error"""");",this,XmlPrinter,XmlPrinter,ar.fiuba.tecnicas.framework.JTest.XmlPrinter,YES,"Clearly, ""printTestCaseWithError(test, time, throwable, ""error"");"" calls the `printTestCaseWithError` method, where the receiver object is implicitly `this`. Based on the class where method `x` is located, I infer that both the declared type and inferred type are `XmlPrinter`. Therefore, the calling relationship is yes."
+43,12,../replication_package/raw_data/url633772aa30_isma3l_Tp2_tgz-pJ8-ar_fiuba_tecnicas_framework_Pruebas_Casos1_MainJ8/wala0cfa.csv,697,ar/fiuba/tecnicas/framework/ArgumentValidator.start:()V,com/sun/javaws/exceptions/InvalidArgumentException.<init>:([Ljava/lang/String;)V,"public void start() throws InvalidArgumentException {
+    if (args.size() > 0) {
+        if (badOption() || badArgAmount()) {
+            throw new InvalidArgumentException(new String[] { ""Bad options"" });
+        }
+        setArgumentToRunner();
+    }
+}","class InvalidArgumentException { void InvalidArgumentException ( String[] a0, ) { return void1; }",1,1,0,TRUE,InvalidArgumentException,1,1,FALSE,ar.fiuba.tecnicas.framework.ArgumentValidator,"public static final java.lang.String regexptestcaseopt;, public static final java.lang.String regexptestsuiteopt;, public static final java.lang.String tagstestcaseopt;",[],[],com.sun.javaws.exceptions.InvalidArgumentException,,,"throw new InvalidArgumentException(new String[] { """"Bad options"""" });",InvalidArgumentException,InvalidArgumentException,InvalidArgumentException,com.sun.javaws.exceptions.InvalidArgumentException,YES,"Clearly, the code line ""throw new InvalidArgumentException(new String[] { ""Bad options"" });"" calls the constructor of `InvalidArgumentException`."
+44,12,../replication_package/raw_data/url633772aa30_isma3l_Tp2_tgz-pJ8-ar_fiuba_tecnicas_framework_Pruebas_Casos1_MainJ8/wala0cfa.csv,738,ar/fiuba/tecnicas/framework/JTest/ResultPrinter.printSummary:(Lar/fiuba/tecnicas/framework/JTest/TestReport;)V,ar/fiuba/tecnicas/framework/JTest/TestReport.errorCount:()I,"private void printSummary(TestReport result) {
+    printStream.println(""SUMMARY"");
+    printStream.println(""Run: "" + result.runCount());
+    printStream.println(""Failures: "" + result.failureCount());
+    printStream.println(""Errors: "" + result.errorCount());
+}","public int errorCount() {
+    return errortest;
+}",1,1,0,TRUE,errorCount,1,1,FALSE,ar.fiuba.tecnicas.framework.JTest.ResultPrinter,,[ar.fiuba.tecnicas.framework.JTest.TestListener],[],ar.fiuba.tecnicas.framework.JTest.TestReport,[],[],"printStream.println(""""Errors: """" + result.errorCount());",result,TestReport,unknown,ar.fiuba.tecnicas.framework.JTest.TestReport,YES,"The invocation line ""printStream.println(""Errors: "" + result.errorCount());"" calls the `errorCount` method, where the receiver object is `result`. From the parameter ""TestReport result"", we know its declared type is `TestReport`, while its runtime type is unknown. Therefore, I speculate that this calling relationship is likely reasonable."
+45,12,../replication_package/raw_data/url633772aa30_isma3l_Tp2_tgz-pJ8-ar_fiuba_tecnicas_framework_Pruebas_Casos1_MainJ8/wala0cfa.csv,792,ar/fiuba/tecnicas/framework/JTest/TestReport.testsuiteNameMatchRegularExpression:(Lar/fiuba/tecnicas/framework/JTest/Test;)Z,com/sun/javaws/exceptions/InvalidArgumentException.toString:()Ljava/lang/String;,"public boolean testsuiteNameMatchRegularExpression(Test test) {
+    return recognizerExpressionsTestsuite == null || recognizerExpressionsTestsuite.validate(test.toString());
+}",class InvalidArgumentException { String toString ( ) { return String1; },0,1,0,TRUE,toString,0,0,FALSE,ar.fiuba.tecnicas.framework.JTest.TestReport,,[],[],com.sun.javaws.exceptions.InvalidArgumentException,,,nonexistent,nonexistent,nonexistent,nonexistent,com.sun.javaws.exceptions.InvalidArgumentException,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+46,12,../replication_package/raw_data/url633772aa30_isma3l_Tp2_tgz-pJ8-ar_fiuba_tecnicas_framework_Pruebas_Casos1_MainJ8/wala0cfa.csv,793,ar/fiuba/tecnicas/framework/JTest/TestReport.testsuiteNameMatchRegularExpression:(Lar/fiuba/tecnicas/framework/JTest/Test;)Z,ar/fiuba/tecnicas/framework/Usage.toString:()Ljava/lang/String;,"public boolean testsuiteNameMatchRegularExpression(Test test) {
+    return recognizerExpressionsTestsuite == null || recognizerExpressionsTestsuite.validate(test.toString());
+}","@Override
+public String toString() {
+    return usage;
+}",0,1,0,TRUE,toString,0,0,FALSE,ar.fiuba.tecnicas.framework.JTest.TestReport,,[],[],ar.fiuba.tecnicas.framework.Usage,[],[],nonexistent,nonexistent,nonexistent,nonexistent,ar.fiuba.tecnicas.framework.Usage,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+47,13,../replication_package/raw_data/url9d32402837_dusan_rychnovsky_chess_endgames_tgz-pJ8-cz_dusanrychnovsky_chessendgames_core_strategies_PrecomputedValuesJ8/wala0cfa.csv,25,cz/dusanrychnovsky/chessendgames/core/strategies/PrecomputedValues.save:(Ljava/io/ObjectOutput;)V,cz/dusanrychnovsky/chessendgames/core/Player.hashCode:()I,"public void save(ObjectOutput out) throws IOException {
+    out.writeObject(this);
+}","@Override
+public int hashCode() {
+    return color.hashCode();
+}",0,1,0,FALSE,hashCode,0,0,FALSE,cz.dusanrychnovsky.chessendgames.core.strategies.PrecomputedValues,,[cz.dusanrychnovsky.chessendgames.core.strategies.Strategy][java.io.Serializable],[],cz.dusanrychnovsky.chessendgames.core.Player,[java.io.Serializable],[],nonexistent,nonexistent,nonexistent,nonexistent,cz.dusanrychnovsky.chessendgames.core.Player,NO,I carefully examined the code lines of method x and did not find any traces of the invocation of method y. So I guess the answer is no.
+48,13,../replication_package/raw_data/url9d32402837_dusan_rychnovsky_chess_endgames_tgz-pJ8-cz_dusanrychnovsky_chessendgames_core_strategies_PrecomputedValuesJ8/wala0cfa.csv,126,cz/dusanrychnovsky/chessendgames/core/Situation.isOccupied:(Lcz/dusanrychnovsky/chessendgames/core/Position;)Z,cz/dusanrychnovsky/chessendgames/core/Position.equals:(Ljava/lang/Object;)Z,"public boolean isOccupied(Position position) {
+    for (Entry<Piece, Position> entry : pieces.entrySet()) {
+        if (position.equals(entry.getValue())) {
+            return true;
+        }
+    }
+    return false;
+}","@Override
+public boolean equals(Object obj) {
+    if (!(obj instanceof Position)) {
+        return false;
+    }
+    Position other = (Position) obj;
+    return (column.equals(other.column) && row.equals(other.row));
+}",1,1,1,TRUE,equals,1,1,FALSE,cz.dusanrychnovsky.chessendgames.core.Situation,,"[java.lang.Iterable<java.util.Map$Entry<cz.dusanrychnovsky.chessendgames.core.Piece, cz.dusanrychnovsky.chessendgames.core.Position>>][java.io.Serializable]",[],cz.dusanrychnovsky.chessendgames.core.Position,[java.io.Serializable],[],position.equals(entry.getValue()),position,Position,unknown,cz.dusanrychnovsky.chessendgames.core.Position,YES,"The declared type of receiver object is Position, which is the same as class B. So it's likely that method x[Situation.isOccupied] invokes method y[Position.equals]."
+49,15,../replication_package/raw_data/url587829ef81_champdavis_KhovanovHomology_tgz-pJ8-KhovanovMapJ8/wala0cfa.csv,1,KhovanovMap.fillResolvedKnots:(LKnot;)V,KhovanovMapNode.<init>:(Ljava/lang/String;Ljava/util/ArrayList;)V,"public void fillResolvedKnots(Knot k) {
+    if (k.getLeftKnot() == null) {
+        int numOnes = StringUtils.countMatches(k.getBinCode(), ""1"");
+        this.rows[numOnes].add(new KhovanovMapNode(k.getBinCode(), k.getCircles()));
+    } else {
+        fillResolvedKnots(k.getLeftKnot());
+        fillResolvedKnots(k.getRightKnot());
+    }
+}","public KhovanovMapNode(String bcode, ArrayList<SeifertCircle> circ) {
+    this.circles = circ;
+    this.binarycode = bcode;
+    this.basis = new Tensor[(int) Math.pow(2, this.circles.size())];
+    this.outMaps = new DMap[StringUtils.countMatches(this.binarycode, ""0"")];
+    this.inMaps = new DMap[StringUtils.countMatches(this.binarycode, ""1"")];
+    makeBasis();
+}",1,1,1,TRUE,KhovanovMapNode,1,1,FALSE,KhovanovMap,,[],[],KhovanovMapNode,[],[],"new KhovanovMapNode(k.getBinCode(), k.getCircles())",KhovanovMapNode,KhovanovMapNode,KhovanovMapNode,KhovanovMapNode,YES,Method x creates a new instance of KhovanovMapNode. Method y is the constructor of KhovanovMapNode. So method x invokes method y.
+50,18,../replication_package/raw_data/url9ef4af9ae5_stevenreyn_RegionViewer_tgz-pJ8-net_slreynolds_ds_SecondTestJ8/wala0cfa.csv,1609,net/slreynolds/ds/export/GraphVizExporter.printSymbol:(Lnet/slreynolds/ds/model/GraphPoint;ILjava/io/PrintStream;)V,net/slreynolds/ds/Foo.toString:()Ljava/lang/String;,"private void printSymbol(GraphPoint n, int level, PrintStream ostream) {
+    ostream.printf(""%snode%s"", ExporterUtils.getIndent(level), n.getID());
+    final StringBuilder label = n.isAnonymous() ? new StringBuilder(' ') : new StringBuilder(n.getName());
+    ostream.printf(""[label = \""%s\"" shape=plaintext"", label.toString());
+    Color color = getColor(n.getGeneration());
+    ostream.printf("" fillcolor=\""#%2x%2x%2x\"" style=filled "", color.getRed(), color.getGreen(), color.getBlue());
+    ostream.printf(""];\n"");
+}","@Override
+public String toString() {
+    return ""Foo("" + ID + "")"";
+}",0,1,0,TRUE,toString,0,0,FALSE,net.slreynolds.ds.export.GraphVizExporter,,[net.slreynolds.ds.export.AbstractExporter][net.slreynolds.ds.export.Exporter],[],net.slreynolds.ds.Foo,[java.lang.Comparable<net.slreynolds.ds.Foo>],[],label.toString(),label,StringBuilder,StringBuilder,net.slreynolds.ds.Foo,NO,"According to funcanme 'toString', the only invocation_line of 'toString' is 'label.toString()'. So receiver object is 'label', whose declared type is 'StringBuilder' according to 'StringBuilder label = n.isAnonymous() ? new StringBuilder(' ') : new StringBuilder(n.getName());', which is not class B or its descendants. Therefore, the answer is ""NO""."
+51,22,../replication_package/raw_data/urld44fdf4fee_nadilsons_reflection_dsl_tgz-pJ8-br_com_bit_ideias_reflection_SimplePerformanceTestJ8/wala0cfa.csv,55,br/com/bit/ideias/reflection/rql/query/ExpressionPart.parse:()Lbr/com/bit/ideias/reflection/criteria/expression/Expression;,br/com/bit/ideias/reflection/rql/query/Rql.parseSimple:(Ljava/lang/String;)Lbr/com/bit/ideias/reflection/criteria/expression/Expression;,"@Override
+public Expression parse() {
+    return Rql.parseSimple(rql);
+}","protected static Expression parseSimple(String rql) {
+    String originalRql = rql;
+    rql = rql.trim();
+    String lowerRql = rql.toLowerCase();
+    if (!EXPRESSION_PATTERN.matcher(lowerRql).matches())
+        throw new SyntaxException(String.format(""There is an error on this part of your rql => %s"", rql));
+    int pos = rql.indexOf(' ');
+    String clauseName = rql.substring(0, pos).toUpperCase().trim();
+    QueryClause clause = QueryClause.valueOf(clauseName);
+    rql = rql.substring(pos).trim();
+    pos = rql.indexOf(' ');
+    String op = rql.substring(0, pos).toUpperCase().trim();
+    QueryOperator operator = transformToQueryOperator(op);
+    if (!clause.acceptsOperator(operator))
+        throw new SyntaxException(String.format(""%s does not work with %s => %s"", clauseName, op, rql));
+    String rightHand = rql.substring(op.length()).trim();
+    if (rightHand.startsWith(""'"") || rightHand.startsWith(""("")) {
+        return operator.getExpression(clause, removeEdges(rightHand));
+    } else {
+        throw new SyntaxException(String.format(""There is an error on the right hand operand of this query => %s"", originalRql));
+    }
+}",1,1,1,TRUE,parseSimple,1,1,TRUE,br.com.bit.ideias.reflection.rql.query.ExpressionPart,,[br.com.bit.ideias.reflection.rql.query.QueryPart],[],br.com.bit.ideias.reflection.rql.query.Rql,[],[],Rql.parseSimple(rql),Rql,Rql,Rql,br.com.bit.ideias.reflection.rql.query.Rql,YES,"Based on the invocation line 'Rql.parseSimple(rql),' which is a static method call, it's evident that the receiver is the class 'Rql,' which coincidentally matches class 'B.' Consequently, the invocation is valid."
+52,22,../replication_package/raw_data/urld44fdf4fee_nadilsons_reflection_dsl_tgz-pJ8-br_com_bit_ideias_reflection_SimplePerformanceTestJ8/wala0cfa.csv,110,br/com/bit/ideias/reflection/rql/query/Rql.parse:(Ljava/lang/String;)Lbr/com/bit/ideias/reflection/criteria/Criterion;,br/com/bit/ideias/reflection/exceptions/SyntaxException.<init>:(Ljava/lang/String;)V,"protected Criterion parse(String rql) {
+    if (isEmpty(rql))
+        throw new SyntaxException(""Empty query"");
+    rql = rql.trim();
+    validateOverPattern(rql);
+    rql = removeFrom(rql);
+    String className = retrieveClassName(rql);
+    rql = rql.substring(className.length()).trim();
+    Criterion retorno = Introspector.createCriterion(className);
+    if (isEmpty(rql))
+        return retorno;
+    rql = removeWhere(rql);
+    validateRestrictions(rql);
+    QueryPart part = parseRestrictions(rql, new AtomicInteger());
+    retorno.add(part.parse());
+    return retorno;
+}","class SyntaxException { void SyntaxException ( String a0, ) { return void1; }",1,1,0,TRUE,SyntaxException,1,1,FALSE,br.com.bit.ideias.reflection.rql.query.Rql,,[],[],br.com.bit.ideias.reflection.exceptions.SyntaxException,[br.com.bit.ideias.reflection.exceptions.RQLException][br.com.bit.ideias.reflection.exceptions.BaseReflectionDslException][java.lang.RuntimeException],[],"new SyntaxException(""Empty query"")",SyntaxException,SyntaxException,SyntaxException,br.com.bit.ideias.reflection.exceptions.SyntaxException,YES,"The invocation_line invokes a constructor method. So the receiver object is class SyntaxException, which is the same as class B."
+53,39,../replication_package/raw_data/urld5c972ef81_noxx90_jflam_tgz-pJ8-fr_noxx90_jflam_BenchmarkJ8/wala0cfa.csv,913,fr/noxx90/jflam/renderer/impl/DefaultHistogramRenderer.initializeRangeMap:(Lfr/noxx90/jflam/model/Flame;)V,com/google/common/collect/Range.hashCode:()I,"protected void initializeRangeMap(Flame flame) {
+    info(""DefaultHistogramRenderer"", ""Initialize RangeMap for form selection"");
+    rangeMap = TreeRangeMap.create();
+    float inf = 0, sup = 0;
+    Iterator<Form> it = flame.getForms().values().iterator();
+    while (it.hasNext()) {
+        Form form = it.next();
+        inf = sup;
+        sup += form.getWeight();
+        info(""DefaultHistogramRenderer"", ""Found form with weight="" + form.getWeight());
+        if (it.hasNext()) {
+            rangeMap.put(Range.closedOpen(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        } else {
+            rangeMap.put(Range.closed(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        }
+    }
+    weightSum = sup;
+}",class Range { int hashCode ( ) { return int1; },0,1,0,FALSE,hashCode,1,1,FALSE,fr.noxx90.jflam.renderer.impl.DefaultHistogramRenderer,"protected com.google.common.collect.RangeMap<java.lang.Float, fr.noxx90.jflam.model.Form> rangeMap;, protected float weightSum;, protected float ratio;, protected float marginTop;, protected float marginLeft;",[fr.noxx90.jflam.renderer.HistogramRenderer],[fr.noxx90.jflam.renderer.impl.ThreadPooledHistogramRenderer],com.google.common.collect.Range,,,"rangeMap.put(Range.closedOpen(inf, sup), form);",Range,Range,Range,com.google.common.collect.Range,YES,"When Map puts the pair(key, pair) into rangeMap, it will first call the hashCode method of Range to determine whether the key already exists. So method x[initializeRangeMap] invokes method y[Range.hashCode]."
+54,39,../replication_package/raw_data/urld5c972ef81_noxx90_jflam_tgz-pJ8-fr_noxx90_jflam_BenchmarkJ8/wala0cfa.csv,925,fr/noxx90/jflam/renderer/impl/DefaultHistogramRenderer.initializeRangeMap:(Lfr/noxx90/jflam/model/Flame;)V,com/google/common/collect/Cut$AboveValue.hashCode:()I,"protected void initializeRangeMap(Flame flame) {
+    info(""DefaultHistogramRenderer"", ""Initialize RangeMap for form selection"");
+    rangeMap = TreeRangeMap.create();
+    float inf = 0, sup = 0;
+    Iterator<Form> it = flame.getForms().values().iterator();
+    while (it.hasNext()) {
+        Form form = it.next();
+        inf = sup;
+        sup += form.getWeight();
+        info(""DefaultHistogramRenderer"", ""Found form with weight="" + form.getWeight());
+        if (it.hasNext()) {
+            rangeMap.put(Range.closedOpen(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        } else {
+            rangeMap.put(Range.closed(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        }
+    }
+    weightSum = sup;
+}",class Cut$AboveValue { int hashCode ( ) { return int1; },0,1,0,FALSE,hashCode,0,0,FALSE,fr.noxx90.jflam.renderer.impl.DefaultHistogramRenderer,"protected com.google.common.collect.RangeMap<java.lang.Float, fr.noxx90.jflam.model.Form> rangeMap;, protected float weightSum;, protected float ratio;, protected float marginTop;, protected float marginLeft;",[fr.noxx90.jflam.renderer.HistogramRenderer],[fr.noxx90.jflam.renderer.impl.ThreadPooledHistogramRenderer],com.google.common.collect.Cut$AboveValue,,,"rangeMap.put(Range.closedOpen(inf, sup), form);",Range,Range,Range,com.google.common.collect.Cut$AboveValue,NO,"When Map puts the pair(key, pair) into rangeMap, it will first call the hashCode method of Range to determine if the key already exists. So runtime type of receiver object is Range, not Cut$AboveValue."
+55,62,../replication_package/raw_data/url696d9a93c9_liaosiwei_bayesnetwork_tgz-pJ8-tutorial_TutorialJ8/wala0cfa.csv,12,org/eclipse/recommenders/jayes/util/triangulation/MinFillIn.getHeuristicValue:(Lorg/eclipse/recommenders/jayes/util/triangulation/QuotientGraph;I)I,org/eclipse/recommenders/jayes/BayesNode.toString:()Ljava/lang/String;,"@Override
+public int getHeuristicValue(QuotientGraph graph, int node) {
+    int fillIn = 0;
+    Set<Integer> neighborsOfNode = graph.getNeighbors(node);
+    for (final int neighbor : neighborsOfNode) {
+        final Set<Integer> neighbors2 = new HashSet<Integer>(graph.getNeighbors(neighbor));
+        neighbors2.retainAll(neighborsOfNode);
+        fillIn += neighborsOfNode.size() - 1 - neighbors2.size();
+    }
+    return fillIn;
+}","@Override
+public String toString() {
+    return name;
+}",0,1,0,FALSE,toString,0,0,FALSE,org.eclipse.recommenders.jayes.util.triangulation.MinFillIn,,[org.eclipse.recommenders.jayes.util.triangulation.IEliminationHeuristic],[],org.eclipse.recommenders.jayes.BayesNode,[],[],nonexsitent,nonexsitent,nonexsitent,nonexsitent,,NO,Method y[toString] does not appear in method x. So the invocation is nonexsitent.
+56,92,../replication_package/raw_data/url7f729337e3_timmolter_Sundial_tgz-pJ8-org_knowm_sundial_SampleRunJ8/wala0cfa.csv,661,org/quartz/jobs/JobDetailImpl.toString:()Ljava/lang/String;,org/quartz/triggers/CronTriggerImpl.toString:()Ljava/lang/String;,"@Override
+public String toString() {
+    return ""name: '"" + getName() + ""', Job Class: "" + ((getJobClass() == null) ? null : getJobClass().getName()) + "", description: "" + getDescription() + "" isConcurrencyAllowed: "" + isConcurrencyAllowed() + "", jobDataMap: "" + ((jobDataMap == null) ? ""empty"" : Arrays.toString(jobDataMap.entrySet().toArray()));
+}","@Override
+public String toString() {
+    return super.toString() + "", cronEx: "" + getCronExpression() + "", timeZone: "" + getTimeZone().getID();
+}",0,1,0,TRUE,toString,0,0,FALSE,org.quartz.jobs.JobDetailImpl,,"[java.lang.Cloneable][java.io.Serializable][org.quartz.jobs.JobDetail][java.io.Serializable,java.lang.Cloneable]",[],org.quartz.triggers.CronTriggerImpl,"[org.quartz.triggers.AbstractTrigger][org.quartz.triggers.OperableTrigger][org.quartz.triggers.MutableTrigger][org.quartz.triggers.Trigger][java.io.Serializable, java.lang.Cloneable, java.lang.Comparable<org.quartz.triggers.Trigger>][org.quartz.triggers.CronTrigger][org.quartz.triggers.Trigger][java.io.Serializable, java.lang.Cloneable, java.lang.Comparable<org.quartz.triggers.Trigger>]",[],Arrays.toString(jobDataMap.entrySet().toArray())),Arrays,Arrays,Arrays,org.quartz.triggers.CronTriggerImpl,NO,The runtime type of invocation_line has no relation to class B. So method x doesn't invoke method y.
+57,94,../replication_package/raw_data/url6a9f553762_Bresiu_socket_io_tgz-pJ8-MainJ8/wala0cfa.csv,945,com/github/nkzawa/socketio/client/Socket.onopen:()V,com/github/nkzawa/socketio/parser/Packet.<init>:(I)V,"private void onopen() {
+    logger.fine(""transport is open - connecting"");
+    if (!""/"".equals(this.nsp)) {
+        this.packet(new Packet(Parser.CONNECT));
+    }
+}","class Packet { void Packet ( int a0, ) { return void1; }",1,1,0,TRUE,Packet,1,1,FALSE,com.github.nkzawa.socketio.client.Socket,"public static final java.lang.String EVENT_CONNECT;, public static final java.lang.String EVENT_DISCONNECT;, public static final java.lang.String EVENT_ERROR;, public static final java.lang.String EVENT_MESSAGE;, public static final java.lang.String EVENT_CONNECT_ERROR;, public static final java.lang.String EVENT_CONNECT_TIMEOUT;, public static final java.lang.String EVENT_RECONNECT;, public static final java.lang.String EVENT_RECONNECT_ERROR;, public static final java.lang.String EVENT_RECONNECT_FAILED;, public static final java.lang.String EVENT_RECONNECT_ATTEMPT;, public static final java.lang.String EVENT_RECONNECTING;",[com.github.nkzawa.emitter.Emitter],[],com.github.nkzawa.socketio.parser.Packet,,,new Packet(Parser.CONNECT),Packet,Packet,Packet,com.github.nkzawa.socketio.parser.Packet,YES,The invocation_line invokes the constructor of Packet.
+58,94,../replication_package/raw_data/url6a9f553762_Bresiu_socket_io_tgz-pJ8-MainJ8/wala0cfa.csv,2447,com/github/nkzawa/engineio/client/Socket.flush:()V,com/github/nkzawa/engineio/client/Transport.send:([Lcom/github/nkzawa/engineio/parser/Packet;)V,"private void flush() {
+    if (this.readyState != ReadyState.CLOSED && this.transport.writable && !this.upgrading && this.writeBuffer.size() != 0) {
+        logger.fine(String.format(""flushing %d packets in socket"", this.writeBuffer.size()));
+        this.prevBufferLen = this.writeBuffer.size();
+        this.transport.send(this.writeBuffer.toArray(new Packet[this.writeBuffer.size()]));
+        this.emit(EVENT_FLUSH);
+    }
+}","public void send(final Packet[] packets) {
+    EventThread.exec(new Runnable() {
+        @Override
+        public void run() {
+            if (Transport.this.readyState == ReadyState.OPEN) {
+                Transport.this.write(packets);
+            } else {
+                throw new RuntimeException(""Transport not open"");
+            }
+        }
+    });
+}",1,1,0,TRUE,send,1,1,FALSE,com.github.nkzawa.engineio.client.Socket,"public static final java.lang.String EVENT_OPEN;, public static final java.lang.String EVENT_CLOSE;, public static final java.lang.String EVENT_MESSAGE;, public static final java.lang.String EVENT_ERROR;, public static final java.lang.String EVENT_UPGRADE_ERROR;, public static final java.lang.String EVENT_FLUSH;, public static final java.lang.String EVENT_DRAIN;, public static final java.lang.String EVENT_HANDSHAKE;, public static final java.lang.String EVENT_UPGRADING;, public static final java.lang.String EVENT_UPGRADE;, public static final java.lang.String EVENT_PACKET;, public static final java.lang.String EVENT_PACKET_CREATE;, public static final java.lang.String EVENT_HEARTBEAT;, public static final java.lang.String EVENT_DATA;, public static final java.lang.String EVENT_TRANSPORT;, com.github.nkzawa.engineio.client.Transport transport;",[com.github.nkzawa.emitter.Emitter],[com.github.nkzawa.socketio.client.Manager$Engine],com.github.nkzawa.engineio.client.Transport,[com.github.nkzawa.emitter.Emitter],[com.github.nkzawa.engineio.client.transports.Polling][com.github.nkzawa.engineio.client.transports.PollingXHR][com.github.nkzawa.engineio.client.transports.WebSocket],this.transport.send(this.writeBuffer.toArray(new Packet[this.writeBuffer.size()])),transport,com.github.nkzawa.engineio.client.Transport,unknown,com.github.nkzawa.engineio.client.Transport,YES,Receiver object 'transport' is a member variable of class_A. The declared type of receiver object is the same as class_B. So it's likely that method x invokes method y.
+59,94,../replication_package/raw_data/url6a9f553762_Bresiu_socket_io_tgz-pJ8-MainJ8/wala0cfa.csv,3038,com/github/nkzawa/engineio/client/transports/WebSocket.onClose:()V,com/github/nkzawa/engineio/client/Transport.onClose:()V,"@Override
+protected void onClose() {
+    super.onClose();
+}","protected void onClose() {
+    this.readyState = ReadyState.CLOSED;
+    this.emit(EVENT_CLOSE);
+}",1,1,0,TRUE,onClose,1,1,FALSE,com.github.nkzawa.engineio.client.transports.WebSocket,public static final java.lang.String NAME;,[com.github.nkzawa.engineio.client.Transport][com.github.nkzawa.emitter.Emitter],[],com.github.nkzawa.engineio.client.Transport,[com.github.nkzawa.emitter.Emitter],[com.github.nkzawa.engineio.client.transports.Polling][com.github.nkzawa.engineio.client.transports.PollingXHR][com.github.nkzawa.engineio.client.transports.WebSocket],super.onClose();,super,unknown,unknown,com.github.nkzawa.engineio.client.Transport,YES,"The 'super' keyword indicates that method y is a method from the superclass of class_A, which has superclasses com.github.nkzawa.engineio.client.Transport and com.github.nkzawa.emitter.Emitter. class_B happens to be the superclass of class_A.So it's likely that method x invokes method y."
+60,96,../replication_package/raw_data/urlc58f2e0b85_xoriole_CEAC_tgz-pJ8-com_sdm_phr_cpabe_CpabeTestJ8/wala0cfa.csv,8818,com/sdm/phr/bswabe/Bswabe.baseNode:(ILjava/lang/String;)Lcom/sdm/phr/bswabe/BswabePolicy;,com/sdm/phr/bswabe/BswabePolicy.<init>:()V,"private static BswabePolicy baseNode(int k, String s) {
+    BswabePolicy p = new BswabePolicy();
+    p.k = k;
+    if (!(s == null))
+        p.attr = s;
+    else
+        p.attr = null;
+    p.q = null;
+    return p;
+}",class BswabePolicy { void BswabePolicy ( ) { return void1; },1,1,1,TRUE,BswabePolicy,1,1,FALSE,com.sdm.phr.bswabe.Bswabe,,[],[],com.sdm.phr.bswabe.BswabePolicy,[],[],new BswabePolicy(),BswabePolicy,BswabePolicy,BswabePolicy,com.sdm.phr.bswabe.BswabePolicy,YES,"The invocation_line invokes a constructor method. So the receiver object is class BswabePolicy, which is the same as class B."
