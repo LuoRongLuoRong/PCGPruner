@@ -3,15 +3,17 @@
 import tiktoken
 import csv
 
+from src.utils.constant import *
+
 # 计算源代码的长度
-def num_tokens_from_string(string: str, model = "gpt-3.5-turbo") -> int:
+def num_tokens_from_string(string: str, model: str) -> int:
     """Returns the number of tokens in a text string."""
     encoding = tiktoken.encoding_for_model(model)
     num_tokens = len(encoding.encode(string))
     return num_tokens
 
 
-def process_data(iclset_filepath = 'data/iclset.csv', model = "gpt-3.5-turbo"):
+def process_data(iclset_filepath = ICLSET_FILEPATH, model = DEFAULT_MODEL):
     # 读取文件，计算长度，存储到字典中
     data = {}
     with open(iclset_filepath, 'r', newline='') as csvfile:
@@ -24,7 +26,7 @@ def process_data(iclset_filepath = 'data/iclset.csv', model = "gpt-3.5-turbo"):
     sorted_data = sorted(data.items(), key=lambda x: x[1]['length'])
     return sorted_data
 
-def save_to_file(data, complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo'):
+def save_to_file(data, complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL):
     # 将排序后的结果存储到文件中
     complexity_filepath = complexity_dir + model
     with open(complexity_filepath, 'w', newline='') as csvfile:
@@ -34,7 +36,7 @@ def save_to_file(data, complexity_dir = 'data/complexity/', model = 'gpt-3.5-tur
         for item in data:
             writer.writerow({'id': item[0], 'str': item[1]['str'], 'length': item[1]['length']})
 
-def read_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo', num_records = 5):
+def read_from_file(num_records, complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL):
     # 从文件中读取排序后的结果，并返回指定数量的记录
     complexity_filepath = complexity_dir + model
     result = []
@@ -49,7 +51,7 @@ def read_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo',
                 break
     return result
 
-def split_into_equal_intervals(numbers, num_intervals=3):
+def split_into_equal_intervals(numbers, num_intervals):
     # 计算每个区间应包含的数目
     num_per_interval = len(numbers) // num_intervals
     
@@ -62,8 +64,8 @@ def split_into_equal_intervals(numbers, num_intervals=3):
     return intervals
 
 # 根据复杂度获取 ids，默认最高是12
-def get_iclset_ids_complexity(model = 'gpt-3.5-turbo', example_num = 12):
-    shortest = read_from_file(complexity_dir = 'data/complexity/', model = model, num_records = 61)
+def get_iclset_ids_complexity(model, example_num):
+    shortest = read_from_file(complexity_dir = COMPLEXITY_DIR, model = model, num_records = 61)
     lens = []
     for item in shortest:
         # print(f"id: {item['id']}, str: {item['str']}")
@@ -76,19 +78,19 @@ def get_iclset_ids_complexity(model = 'gpt-3.5-turbo', example_num = 12):
     return ids
 
 
-def save_ids_to_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo'):
+def save_ids_to_file(complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL):
     # 将按复杂度排序的 id 存储到文件中
     filepath = complexity_dir + model + '_' + 'complexity_example_ids.csv'
     with open(filepath, 'w', newline='') as csvfile:
         fieldnames = ['example_num', 'ids']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for example_num in range(1, 13):
+        for example_num in range(1, 61):
             ids = get_iclset_ids_complexity(model, example_num)
             writer.writerow({'example_num': example_num, 'ids': ids})
             # print(ids)
 
-def read_ids_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo', example_num = 12):
+def read_ids_from_file(example_num, complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL):
     # 从文件中读取排序后的结果，并返回指定数量的记录
     complexity_filepath = complexity_dir + model + '_' + 'complexity_example_ids.csv'
     with open(complexity_filepath, 'r', newline='') as csvfile:
@@ -100,8 +102,8 @@ def read_ids_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-tur
 
 def test_save():
     # 处理数据并将结果存储到文件中
-    sorted_data = process_data(iclset_filepath = 'data/iclset.csv', model = "gpt-3.5-turbo")
-    save_to_file(sorted_data, complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo')
+    sorted_data = process_data(iclset_filepath = ICLSET_FILEPATH, model = DEFAULT_MODEL)
+    save_to_file(sorted_data, complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL)
 
 def test_read():
     ids = get_iclset_ids_complexity()
@@ -110,6 +112,6 @@ def test_read():
 if __name__ == '__main__':
     # test_save()
     # test_read()
-    # save_ids_to_file()
-    result = read_ids_from_file(example_num=2)
-    print(result)
+    save_ids_to_file()
+    # result = read_ids_from_file(example_num=2)
+    # print(result)
