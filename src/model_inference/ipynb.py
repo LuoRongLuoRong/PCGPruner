@@ -10,11 +10,18 @@ client = OpenAI(
   api_key='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',  # 0226
 )
 
-INPUT_TOKEN_LIMIT = 4080
+INPUT_TOKEN_LIMIT = 16385 - 4096  # 12289, output_max = 4k, total_max = 16k
 ICLSET_FILEPATH = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/iclset.csv'
 VALSET_FILEPATH = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/valset.csv'
 COMPLEXITY_DIR = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/complexity/'
 RESPONSE_DIR = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/response/'
+
+# 计算源代码的长度
+def num_tokens_from_string(string: str, model = "gpt-3.5-turbo") -> int:
+    """Returns the number of tokens in a text string."""
+    encoding = tiktoken.encoding_for_model(model)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
 
 def get_response(prompt, model = 'gpt-3.5-turbo'):
     try:
@@ -33,15 +40,6 @@ def get_response(prompt, model = 'gpt-3.5-turbo'):
 def get_response_content(r):
     return r.choices[0].message.content # 回复的具体内容
 
-# 计算源代码的长度
-def num_tokens_from_string(string: str, model = "gpt-3.5-turbo") -> int:
-    """Returns the number of tokens in a text string."""
-    encoding = tiktoken.encoding_for_model(model)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
-
-
-import csv
 # response 是和模型交互之后的回复
 # program_idx 是训练集项目的 idx
 # idx 是该条数据的 idx
@@ -90,7 +88,7 @@ def newFile(written_filepath):
 
   print('添加完表头后该文件的 length：', get_length_of_csv(written_filepath))
 
-def read_complexity_ids_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo', example_num = 12):
+def read_complexity_ids_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo', example_num = 60):
   # 从文件中读取排序后的结果，并返回指定数量的记录
   complexity_filepath = complexity_dir + model + '_' + 'complexity_example_ids.csv'
   with open(complexity_filepath, 'r', newline='') as csvfile:
@@ -246,4 +244,4 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
         time.sleep(20)
 
 
-record_result_to_file(model='gpt-3.5-turbo', valset_filepath=VALSET_FILEPATH, example_type='complexity', example_num=12)
+record_result_to_file(model='gpt-3.5-turbo', valset_filepath=VALSET_FILEPATH, example_type='complexity', example_num=60)
