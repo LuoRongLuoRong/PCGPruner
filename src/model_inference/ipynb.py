@@ -150,9 +150,9 @@ def get_prompt_example(caller, caller_fqn, callee_fqn, caller_class, callee_clas
                method_x_calls_method_y, your_explanation)
                
                
-def get_example(id, expected_program_idx, expected_idx):
+def get_prompt_example_by(id, expected_program_idx, expected_idx, iclset_filepath=ICLSET_FILEPATH):
   example = ''
-  with open(ICLSET_FILEPATH, 'r') as f:
+  with open(iclset_filepath, 'r') as f:
     dataset_csv_reader = csv.reader(f)
     headers = next(dataset_csv_reader)
     # 逐行读取CSV数据
@@ -166,6 +166,7 @@ def get_example(id, expected_program_idx, expected_idx):
         break
   return example
 
+# 在 prompt 中加上示例
 def get_prompt_icl(few_shot_examples, caller, caller_fqn, callee_fqn, funcname, caller_class, callee_class, caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs):
   cur_input = get_input(caller, caller_fqn, callee_fqn, caller_class, callee_class, funcname,
                caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs) + 'output:'
@@ -183,7 +184,7 @@ Format your response as a JSON object with keys ["invocation_line", "receiver_ob
   for item in few_shot_examples:
     program_idx = item[0]
     idx = item[1]
-    example = get_example(program_idx, idx)
+    example = get_prompt_example_by(program_idx, idx)
     if num_tokens_from_string(example) + num_tokens_from_string(pre + cur_input) > INPUT_TOKEN_LIMIT:
       continue
     pre += example
