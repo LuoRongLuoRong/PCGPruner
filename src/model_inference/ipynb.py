@@ -2,7 +2,6 @@ import time
 import os
 import csv
 import random
-import traceback
 from openai import OpenAI
 import tiktoken
 
@@ -11,13 +10,25 @@ client = OpenAI(
   api_key='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',  # 0226
 )
 
+INPUT_TOKEN_LIMIT = 4080
+ICLSET_FILEPATH = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/iclset.csv'
+VALSET_FILEPATH = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/valset.csv'
+COMPLEXITY_DIR = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/complexity/'
+RESPONSE_DIR = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/response/'
+
 def get_response(prompt, model = 'gpt-3.5-turbo'):
-  response = client.chat.completions.create(
-    messages=[{"role": "user", "content": prompt}],
-    model=model,
-    temperature=0, # this is the degree of randomness of the model's output, 0: precise, 1: creative
-  )
-  return response
+    try:
+        response = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model=model,
+            temperature=0
+        )
+        return response
+    except Exception as e:
+        # 处理异常，例如输出错误信息或者等待一段时间后重新发送请求
+        print(f"An error occurred: {str(e)}")
+        time.sleep(5)  # 等待5秒后重新发送请求
+        return get_response(prompt, model)  # 递归调用函数
 
 def get_response_content(r):
     return r.choices[0].message.content # 回复的具体内容
@@ -34,7 +45,7 @@ import csv
 # response 是和模型交互之后的回复
 # program_idx 是训练集项目的 idx
 # idx 是该条数据的 idx
-def extract_and_save_info_from_response(r, iclset_id, program_idx, idx, r_saved_filepath):
+def extract_and_save_info_from_response(r, program_idx, idx, r_saved_filepath):
   r_id = r.id # 当轮对话 id
   r_model = r.model # 当轮对话调用的模型
   r_choices = r.choices # 这里只有一个选择，表示对话完成的结果。
@@ -48,7 +59,7 @@ def extract_and_save_info_from_response(r, iclset_id, program_idx, idx, r_saved_
   r_prompt_tokens = r.usage.prompt_tokens  # 表示生成这个对话完成结果所用到的输入标记数。
   r_total_tokens = r.usage.total_tokens  # 表示这个对话完成任务总共用到的标记数。
   # 构建存储的行数据
-  row = [iclset_id, program_idx, idx, r_id, r_model, r_choices, r_message, r_content, r_role,
+  row = [program_idx, idx, r_id, r_model, r_choices, r_message, r_content, r_role,
          r_function_call, r_tool_calls, r_usage, r_completion_tokens, r_prompt_tokens, r_total_tokens]
   file_exists = os.path.isfile(r_saved_filepath)
   # 打开文件，写入数据
@@ -56,7 +67,7 @@ def extract_and_save_info_from_response(r, iclset_id, program_idx, idx, r_saved_
     writer = csv.writer(csvfile)
     if not file_exists:
       # 写入标题行
-      writer.writerow(['iclset_id', 'program_idx', 'idx', 'id', 'model', 'choices', 'message', 'content', 'role',
+      writer.writerow(['program_idx', 'idx', 'id', 'model', 'choices', 'message', 'content', 'role',
                        'function_call', 'tool_calls', 'usage', 'completion_tokens', 'prompt_tokens', 'total_tokens'])
     writer.writerow(row)
 
@@ -79,11 +90,27 @@ def newFile(written_filepath):
 
   print('添加完表头后该文件的 length：', get_length_of_csv(written_filepath))
 
-INPUT_TOKEN_LIMIT = 4080
-iclset_filepath = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/iclset.csv'
-valset_filepath = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/valset.csv'
-complexity_dir = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/complexity/'
-response_dir = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/response/'
+def read_complexity_ids_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo', example_num = 12):
+  # 从文件中读取排序后的结果，并返回指定数量的记录
+  complexity_filepath = complexity_dir + model + '_' + 'complexity_example_ids.csv'
+  with open(complexity_filepath, 'r', newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+      if int(row['example_num']) == example_num:
+        return eval(row['ids'])
+  return [11, 18, 29, 35, 50, 67, 78, 87, 95, 107, 145, 271]
+
+def read_similarity_ids_from_file(similarity_dir = 'data/similarity/', model = 'gpt-3.5-turbo', example_num = 20):
+  print()
+  
+
+def get_icl_examples_by_ids(ids, example_num = 12):
+  # 顺序一：简洁度
+  ids = ids[:example_num]
+  examples = []
+  for id in ids:
+    examples.append(get_example(id, '', ''))
+  return examples
 
 
 # 获取 iclset 中构成示例的 input 部分，这部分用于向量
@@ -127,7 +154,7 @@ def get_prompt_example(caller, caller_fqn, callee_fqn, caller_class, callee_clas
                
 def get_example(id, expected_program_idx, expected_idx):
   example = ''
-  with open(iclset_filepath, 'r') as f:
+  with open(ICLSET_FILEPATH, 'r') as f:
     dataset_csv_reader = csv.reader(f)
     headers = next(dataset_csv_reader)
     # 逐行读取CSV数据
@@ -167,13 +194,15 @@ Format your response as a JSON object with keys ["invocation_line", "receiver_ob
 
 def do_experiment(few_shot_examples, caller, caller_fqn, callee_fqn, funcname, caller_class, callee_class, caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs):
   prompt = get_prompt_icl(few_shot_examples, caller, caller_fqn, callee_fqn, funcname, caller_class, callee_class, caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs)
-  response = get_response_content(prompt)
-  return response, prompt
-
+  response = get_response(prompt=prompt)
+  response_content = get_response_content(response)
+  return response, response_content, prompt
 
 # 读取文件 valset.csv
 # 读取已完成的文件的内容
-def write_response_to_file(written_filepath, dataset_filepath, example_type, example_num):
+def record_result_to_file(model, valset_filepath, example_type, example_num):
+  example_num_str = 'inf'
+  written_filepath = RESPONSE_DIR + model + '_' + example_type + '_' + example_num_str + '.csv'
   if not os.path.exists(written_filepath):
     newFile(written_filepath)
 
@@ -181,7 +210,7 @@ def write_response_to_file(written_filepath, dataset_filepath, example_type, exa
   start_row = get_length_of_csv(written_filepath)
   with open(written_filepath, 'a', encoding='gbk') as written_file:
     written_csv_writer = csv.writer(written_file)
-    with open(dataset_filepath, 'r') as dataset_file:
+    with open(valset_filepath, 'r') as dataset_file:
       dataset_csv_reader = csv.reader(dataset_file)
       # 跳过前面的行
       for _ in range(start_row):
@@ -191,45 +220,30 @@ def write_response_to_file(written_filepath, dataset_filepath, example_type, exa
         # 对每行数据进行处理
         program_idx,file_path,idx,src,dst,src_code,dst_code,reason,offset,sa_lb_direct,sa_lb,da_lb,dst_name_match,dst_funcname,actual_lb,actual_lb_trans,is_static,src_class,mvs,src_ancestors,src_descendants,dst_class,dst_ancestors,dst_descendants = row
         
-        cur_input = get_input(caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, mvs=mvs)
-        
         ids = []
         few_shot_examples = []
         if example_type == 'complexity':
-          ids = read_complexity_ids_from_file(complexity_dir = complexity_dir, model = 'gpt-3.5-turbo', example_num=example_num)
+          ids = read_complexity_ids_from_file(complexity_dir = COMPLEXITY_DIR, model = model, example_num=example_num)
         elif example_type == 'random':
           ids = random.sample(range(60), example_num)
         elif example_type == 'similarity':
+          # 当前数据的 input
+          cur_input = get_input(caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, mvs=mvs)
+          # TODO:找到和 cur_input 最相似的向量，找前 20 个
           print()
         few_shot_examples = get_icl_examples_by_ids(ids, example_num)
         
-        response, prompt = do_experiment(few_shot_examples=few_shot_examples, caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, callee_ancestors=dst_ancestors, callee_descendants=dst_descendants, mvs=mvs)
-
-        new_row = [program_idx, idx, response, prompt]
-        response = response.replace('"', '""')
-        print(str(program_idx) + ',' + str(idx) + ',"' + response + '",' + '""')
+        response, response_content, prompt = do_experiment(few_shot_examples=few_shot_examples, caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, callee_ancestors=dst_ancestors, callee_descendants=dst_descendants, mvs=mvs)
+        # 1. 记录回复的 response
+        extract_and_save_info_from_response(r = response, program_idx=program_idx, idx=idx, r_saved_filepath=RESPONSE_DIR+'test1.csv')
+        response_content = response_content.replace('"', '""')
+        # 2. 记录 few-shot 的 examples
+        ids_len = len(ids)
+        new_row = [program_idx, idx, src, dst, src_code, dst_code, response_content, ids, ids_len]
         written_csv_writer.writerow(new_row)
+        written_file.flush()
 
         time.sleep(20)
 
-def read_complexity_ids_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo', example_num = 12):
-  # 从文件中读取排序后的结果，并返回指定数量的记录
-  complexity_filepath = complexity_dir + model + '_' + 'complexity_example_ids.csv'
-  with open(complexity_filepath, 'r', newline='') as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-      if int(row['example_num']) == example_num:
-        return eval(row['ids'])
-  return [11, 18, 29, 35, 50, 67, 78, 87, 95, 107, 145, 271]
 
-def read_similarity_ids_from_file(similarity_dir = 'data/similarity/', model = 'gpt-3.5-turbo', example_num = 20):
-  print()
-  
-
-def get_icl_examples_by_ids(ids, example_num = 12):
-  # 顺序一：简洁度
-  ids = ids[:example_num]
-  examples = []
-  for id in ids:
-    examples.append(get_example(id, '', ''))
-  return examples
+record_result_to_file(model='gpt-3.5-turbo', valset_filepath=VALSET_FILEPATH, example_type='complexity', example_num=12)
