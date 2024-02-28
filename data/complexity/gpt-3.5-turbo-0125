@@ -1,0 +1,1007 @@
+id,str,length
+5,"public ArrayStack() {
+    this(DEFAULT_CAPACITY);
+}",11
+59,"@Override
+protected void onClose() {
+    super.onClose();
+}",13
+28,"public void clearLocalVariables() {
+    DynamicCaseContext.clearLocalVariables();
+}",16
+47,"public void save(ObjectOutput out) throws IOException {
+    out.writeObject(this);
+}",16
+51,"@Override
+public Expression parse() {
+    return Rql.parseSimple(rql);
+}",17
+13,"@Override
+public void ping() throws TException {
+    System.out.println(""Ping"");
+}",18
+0,"public static void main(String[] args) throws InterruptedException {
+    new Test3D().run();
+}",20
+24,"public Theater(final int port) {
+    m_Server = new Server(port, new ServerHandler());
+}",20
+7,"public static Player getInstance() {
+    if (Instance == null)
+        Instance = new Player();
+    return Instance;
+}",24
+45,"public boolean testsuiteNameMatchRegularExpression(Test test) {
+    return recognizerExpressionsTestsuite == null || recognizerExpressionsTestsuite.validate(test.toString());
+}",29
+46,"public boolean testsuiteNameMatchRegularExpression(Test test) {
+    return recognizerExpressionsTestsuite == null || recognizerExpressionsTestsuite.validate(test.toString());
+}",29
+42,"@Override
+public void addError(Test test, String time, Throwable throwable) {
+    printTestCaseWithError(test, time, throwable, ""error"");
+}",30
+29,"public ParkingPlace newParkingPlace(int id) throws ParkingException {
+    ParkingPlace place = new ParkingPlace();
+    place.setId(id);
+    return place;
+}",32
+9,"@Override
+public void ApplyEffect() {
+    System.out.println(""Keys given!"");
+    Player.getInstance().addPoints(250);
+    Player.getInstance().addKey();
+}",33
+12,"@Override
+public int calculate(int log_id, Work w) throws TException {
+    System.out.println(log_id);
+    return w.getNum1() + w.getNum2();
+}",35
+14,"@Override
+public int calculate(int log_id, Work w) throws TException {
+    System.out.println(log_id);
+    return w.getNum1() + w.getNum2();
+}",35
+32,"public void setId(int id) throws CarException {
+    if (id < 0) {
+        throw new CarException(""Id is under zero"");
+    }
+    this.id = id;
+}",39
+57,"private void onopen() {
+    logger.fine(""transport is open - connecting"");
+    if (!""/"".equals(this.nsp)) {
+        this.packet(new Packet(Parser.CONNECT));
+    }
+}",39
+48,"public boolean isOccupied(Position position) {
+    for (Entry<Piece, Position> entry : pieces.entrySet()) {
+        if (position.equals(entry.getValue())) {
+            return true;
+        }
+    }
+    return false;
+}",46
+17,"@Override
+public void run() {
+    while (running) {
+        getProcessInfoFromProc();
+        try {
+            Thread.sleep(samplingInterval);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}",47
+38,"public int getInt(String key) throws JSONException {
+    Object o = get(key);
+    if (o == null)
+        return 0;
+    return o instanceof Number ? ((Number) o).intValue() : (int) getDouble(key);
+}",50
+43,"public void start() throws InvalidArgumentException {
+    if (args.size() > 0) {
+        if (badOption() || badArgAmount()) {
+            throw new InvalidArgumentException(new String[] { ""Bad options"" });
+        }
+        setArgumentToRunner();
+    }
+}",54
+44,"private void printSummary(TestReport result) {
+    printStream.println(""SUMMARY"");
+    printStream.println(""Run: "" + result.runCount());
+    printStream.println(""Failures: "" + result.failureCount());
+    printStream.println(""Errors: "" + result.errorCount());
+}",58
+33,"public final void mLESSTHAN() throws RecognitionException {
+    try {
+        int _type = LESSTHAN;
+        int _channel = DEFAULT_TOKEN_CHANNEL;
+        {
+            match(""lt"");
+        }
+        state.type = _type;
+        state.channel = _channel;
+    } finally {
+    }
+}",64
+21,"public void computeCentroid(Point3d centroid) {
+    centroid.setZero();
+    HalfEdge he = he0;
+    do {
+        centroid.add(he.head().pnt);
+        he = he.next;
+    } while (he != he0);
+    centroid.scale(1 / (double) numVerts);
+}",65
+60,"private static BswabePolicy baseNode(int k, String s) {
+    BswabePolicy p = new BswabePolicy();
+    p.k = k;
+    if (!(s == null))
+        p.attr = s;
+    else
+        p.attr = null;
+    p.q = null;
+    return p;
+}",67
+16,"@Override
+public void run() {
+    while (running) {
+        try {
+            convertToCPUInfo();
+            try {
+                Thread.sleep(samplingInterval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+}",68
+18,"@Override
+public void run() {
+    while (running) {
+        try {
+            convertToCPUInfo();
+            try {
+                Thread.sleep(samplingInterval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+}",68
+8,"public void componentMoved(ComponentEvent e) {
+    Window win = (Window) e.getComponent();
+    if (win == winA) {
+        winB.removeComponentListener(this);
+        winB.setLocationRelativeTo(winA);
+        winB.addComponentListener(this);
+    } else if (winB.isVisible())
+        winA.setLocationRelativeTo(winB);
+}",69
+41,"public void assertArrayEqualsTest() {
+    Double[] list1 = { 1.2, 9.8, 4.6 };
+    Double[] list2 = { 1.2, 9.8, 4.6 };
+    Assert.assertArrayEquals(""Arrays have different value"", list1, list2);
+}",70
+23,"public static String generateHash(final String string) {
+    try {
+        return getHash(string);
+    } catch (final NoSuchAlgorithmException e) {
+        LoggingUtility.error(""Can't calculate hash by string: "" + string);
+    } catch (final UnsupportedEncodingException e) {
+        LoggingUtility.error(""Can't calculate hash by string: "" + string);
+    }
+    return null;
+}",78
+30,"private boolean releaseItem(ParkingPlace place) {
+    LOCK.lock();
+    try {
+        int index = PLACES.indexOf(place);
+        if (index == -1) {
+            return false;
+        }
+        if (PLACES.get(index).isUsed()) {
+            place.togleUsed();
+            return true;
+        }
+    } finally {
+        LOCK.unlock();
+    }
+    return false;
+}",80
+35,"public void generateElevation() {
+    elevation_algo_.update();
+    for (int x = 0; x < map_.getWidth(); x++) {
+        for (int y = 0; y < map_.getHeight(); y++) {
+            WorldGenerationCell cell = map_.getCell(x, y);
+            cell.setElevation(elevation_algo_.generate(x, y, cell));
+        }
+    }
+}",83
+6,"@Override
+public boolean enter() {
+    MovieTriviaQuestion question = questionFactory.buildQuestion();
+    question.displayPrompt();
+    while (!question.isSubmitted()) {
+        try {
+            Thread.sleep(10);
+        } catch (Exception e) {
+        }
+    }
+    question.closePrompt();
+    boolean isCorrect = question.isCorrectAnswer();
+    System.out.println(""\nReturned "" + isCorrect);
+    return isCorrect;
+}",85
+3,"public void setForegroundColor(Color c) {
+    int value = c.getRGB();
+    if (this.colors != null) {
+        final int len = this.colors.length;
+        for (int i = 0; i < len; i++) {
+            colors[i] = value;
+        }
+    } else {
+        System.err.println(""setColor() invoked on "" + this + "" without calling setTriangles() first ?"");
+    }
+}",87
+4,"public void setForegroundColor(Color c) {
+    int value = c.getRGB();
+    if (this.colors != null) {
+        final int len = this.colors.length;
+        for (int i = 0; i < len; i++) {
+            colors[i] = value;
+        }
+    } else {
+        System.err.println(""setColor() invoked on "" + this + "" without calling setTriangles() first ?"");
+    }
+}",87
+56,"@Override
+public String toString() {
+    return ""name: '"" + getName() + ""', Job Class: "" + ((getJobClass() == null) ? null : getJobClass().getName()) + "", description: "" + getDescription() + "" isConcurrencyAllowed: "" + isConcurrencyAllowed() + "", jobDataMap: "" + ((jobDataMap == null) ? ""empty"" : Arrays.toString(jobDataMap.entrySet().toArray()));
+}",90
+20,"protected void buildHull() {
+    int cnt = 0;
+    Vertex eyeVtx;
+    computeMaxAndMin();
+    createInitialSimplex();
+    while ((eyeVtx = nextPointToAdd()) != null) {
+        addPointToHull(eyeVtx);
+        cnt++;
+        LOG.debug(""iteration "" + cnt + "" done"");
+    }
+    reindexFacesAndVertices();
+    LOG.debug(""hull done"");
+}",91
+49,"public void fillResolvedKnots(Knot k) {
+    if (k.getLeftKnot() == null) {
+        int numOnes = StringUtils.countMatches(k.getBinCode(), ""1"");
+        this.rows[numOnes].add(new KhovanovMapNode(k.getBinCode(), k.getCircles()));
+    } else {
+        fillResolvedKnots(k.getLeftKnot());
+        fillResolvedKnots(k.getRightKnot());
+    }
+}",93
+58,"private void flush() {
+    if (this.readyState != ReadyState.CLOSED && this.transport.writable && !this.upgrading && this.writeBuffer.size() != 0) {
+        logger.fine(String.format(""flushing %d packets in socket"", this.writeBuffer.size()));
+        this.prevBufferLen = this.writeBuffer.size();
+        this.transport.send(this.writeBuffer.toArray(new Packet[this.writeBuffer.size()]));
+        this.emit(EVENT_FLUSH);
+    }
+}",93
+11,"@Override
+public void run() {
+    CalculatorServer cs = new CalculatorServer();
+    Calculator.Processor processor = new Calculator.Processor(cs);
+    TServerTransport serverTransport = null;
+    try {
+        serverTransport = new TServerSocket(9090);
+    } catch (TTransportException e) {
+        e.printStackTrace();
+    }
+    TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
+    server.serve();
+}",95
+36,"public boolean setActive(String name) {
+    if (name == null)
+        throw new IllegalArgumentException(""name is null!"");
+    State state = states_.get(name);
+    if (state == null) {
+        return false;
+    } else if (state != active_state_) {
+        if (active_state_ != null) {
+            active_state_.onExit();
+        }
+        active_state_ = state;
+        active_state_.onEnter();
+    }
+    return true;
+}",95
+22,"private boolean openServerSocket() {
+    try {
+        m_ServerSocket = new ServerSocket(m_Port);
+        LoggingUtility.core(""Server started using port: "" + m_Port);
+        return true;
+    } catch (final IOException e) {
+        LoggingUtility.error(""Can't listen using port: "" + m_Port);
+    } catch (final Exception e) {
+        LoggingUtility.error(""Can't listen using port: "" + m_Port);
+    }
+    return false;
+}",97
+26,"public static void main(String[] args) {
+    final Method[] declaredMethods = DynamicDemo.class.getDeclaredMethods();
+    for (final Method m : declaredMethods) {
+        if (m.getAnnotation(DynamicCase.class) == null) {
+            continue;
+        }
+        DynamicCase dynamicCase = m.getAnnotation(DynamicCase.class);
+        new Processor().doProcess(new DefaultTestContext(null, DynamicDemo.class, m, null), new GlobalDimensionBasedDynamicCase(dynamicCase));
+    }
+}",99
+55,"@Override
+public int getHeuristicValue(QuotientGraph graph, int node) {
+    int fillIn = 0;
+    Set<Integer> neighborsOfNode = graph.getNeighbors(node);
+    for (final int neighbor : neighborsOfNode) {
+        final Set<Integer> neighbors2 = new HashSet<Integer>(graph.getNeighbors(neighbor));
+        neighbors2.retainAll(neighborsOfNode);
+        fillIn += neighborsOfNode.size() - 1 - neighbors2.size();
+    }
+    return fillIn;
+}",106
+37,"org/lwjgl/opengl/GL11.glMatrixMode:(I)V	""public void resizeGL() {
+    GL11.glViewport(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    GL11.glMatrixMode(GL_PROJECTION);
+    GL11.glLoadIdentity();
+    GL11.gluOrtho2D(0.0f, DISPLAY_WIDTH, 0.0f, DISPLAY_HEIGHT);
+    GL11.glPushMatrix();
+    GL11.glMatrixMode(GL_MODELVIEW);
+    GL11.glLoadIdentity();
+    GL11.glPushMatrix();
+}",107
+31,"public static void main(String[] args) {
+    try {
+        List<Parking> parkings = new ParkingGenerator().generateParkingList(50, 10);
+        ParkingList.getInstence().addParking(parkings);
+        List<Car> cars = new CarGenerator().generateCars(3000);
+        CarExecuter executer = new CarExecuter();
+        executer.execute(cars);
+    } catch (ParkingException e) {
+        LOG.fatal(""Fatal"", e);
+    } catch (CarException e) {
+        LOG.fatal(""Fatal"", e);
+    }
+}",120
+50,"private void printSymbol(GraphPoint n, int level, PrintStream ostream) {
+    ostream.printf(""%snode%s"", ExporterUtils.getIndent(level), n.getID());
+    final StringBuilder label = n.isAnonymous() ? new StringBuilder(' ') : new StringBuilder(n.getName());
+    ostream.printf(""[label = \""%s\"" shape=plaintext"", label.toString());
+    Color color = getColor(n.getGeneration());
+    ostream.printf("" fillcolor=\""#%2x%2x%2x\"" style=filled "", color.getRed(), color.getGreen(), color.getBlue());
+    ostream.printf(""];\n"");
+}",121
+52,"protected Criterion parse(String rql) {
+    if (isEmpty(rql))
+        throw new SyntaxException(""Empty query"");
+    rql = rql.trim();
+    validateOverPattern(rql);
+    rql = removeFrom(rql);
+    String className = retrieveClassName(rql);
+    rql = rql.substring(className.length()).trim();
+    Criterion retorno = Introspector.createCriterion(className);
+    if (isEmpty(rql))
+        return retorno;
+    rql = removeWhere(rql);
+    validateRestrictions(rql);
+    QueryPart part = parseRestrictions(rql, new AtomicInteger());
+    retorno.add(part.parse());
+    return retorno;
+}",131
+25,"@Override
+public final void run() {
+    if (!openServerSocket())
+        return;
+    new Thread(new Observer()).start();
+    while (m_IsActive) {
+        final Socket clientSocket = acceptConnection();
+        if (clientSocket != null) {
+            final Client client = new Client(clientSocket);
+            LoggingUtility.core(""Client connected from: "" + clientSocket.getInetAddress().getHostAddress());
+            if (m_ServerHandler.onConnect(client.getID(), clientSocket.getInetAddress())) {
+                LoggingUtility.core(""Client approved with ID: "" + client.getID());
+                client.start();
+                addClient(client);
+            } else
+                closeConnection(clientSocket);
+        }
+    }
+}",138
+39,"public static String toString(JSONObject o) throws JSONException {
+    StringBuffer sb = new StringBuffer();
+    sb.append(escape(o.getString(""name"")));
+    sb.append(""="");
+    sb.append(escape(o.getString(""value"")));
+    if (o.has(""expires"")) {
+        sb.append("";expires="");
+        sb.append(o.getString(""expires""));
+    }
+    if (o.has(""domain"")) {
+        sb.append("";domain="");
+        sb.append(escape(o.getString(""domain"")));
+    }
+    if (o.has(""path"")) {
+        sb.append("";path="");
+        sb.append(escape(o.getString(""path"")));
+    }
+    if (o.optBoolean(""secure"")) {
+        sb.append("";secure"");
+    }
+    return sb.toString();
+}",145
+53,"protected void initializeRangeMap(Flame flame) {
+    info(""DefaultHistogramRenderer"", ""Initialize RangeMap for form selection"");
+    rangeMap = TreeRangeMap.create();
+    float inf = 0, sup = 0;
+    Iterator<Form> it = flame.getForms().values().iterator();
+    while (it.hasNext()) {
+        Form form = it.next();
+        inf = sup;
+        sup += form.getWeight();
+        info(""DefaultHistogramRenderer"", ""Found form with weight="" + form.getWeight());
+        if (it.hasNext()) {
+            rangeMap.put(Range.closedOpen(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        } else {
+            rangeMap.put(Range.closed(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        }
+    }
+    weightSum = sup;
+}",191
+54,"protected void initializeRangeMap(Flame flame) {
+    info(""DefaultHistogramRenderer"", ""Initialize RangeMap for form selection"");
+    rangeMap = TreeRangeMap.create();
+    float inf = 0, sup = 0;
+    Iterator<Form> it = flame.getForms().values().iterator();
+    while (it.hasNext()) {
+        Form form = it.next();
+        inf = sup;
+        sup += form.getWeight();
+        info(""DefaultHistogramRenderer"", ""Found form with weight="" + form.getWeight());
+        if (it.hasNext()) {
+            rangeMap.put(Range.closedOpen(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        } else {
+            rangeMap.put(Range.closed(inf, sup), form);
+            info(""DefaultHistogramRenderer"", ""-> ("" + inf + "", "" + sup + "")"");
+        }
+    }
+    weightSum = sup;
+}",191
+34,"public final void mIDENTIFIER() throws RecognitionException {
+    try {
+        int _type = IDENTIFIER;
+        int _channel = DEFAULT_TOKEN_CHANNEL;
+        {
+            matchRange('a', 'z');
+            loop5: do {
+                int alt5 = 3;
+                int LA5_0 = input.LA(1);
+                if (((LA5_0 >= 'a' && LA5_0 <= 'z'))) {
+                    alt5 = 1;
+                } else if ((LA5_0 == '-' || (LA5_0 >= '0' && LA5_0 <= '9'))) {
+                    alt5 = 2;
+                }
+                switch(alt5) {
+                    case 1:
+                        {
+                            matchRange('a', 'z');
+                        }
+                        break;
+                    case 2:
+                        {
+                            mDIGITS();
+                        }
+                        break;
+                    default:
+                        break loop5;
+                }
+            } while (true);
+        }
+        state.type = _type;
+        state.channel = _channel;
+    } finally {
+    }
+}",219
+10,"@Override
+public void update(Observable o, Object arg) {
+    ((GameOverBehavior) arg).Behave();
+    if (Player.getInstance().getPoints() > Integer.parseInt(highScores[9][1])) {
+        String name = (String) JOptionPane.showInputDialog(Maze.mainWindow, ""Please enter your name"", ""New high score!"", JOptionPane.PLAIN_MESSAGE, null, null, null);
+        insertScore(name, Player.getInstance().getPoints());
+        serializeHighScores();
+    }
+    hsWindow = new HighScoresWindow();
+    hsWindow.setData(parseToString(), this);
+    hsWindow.setVisible(true);
+    hsWindow.setModalityType(ModalityType.APPLICATION_MODAL);
+    hsWindow.setBounds(Maze.mainWindow.getBounds());
+    try {
+        Thread.sleep(7000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    hsWindow.dispose();
+    int option = JOptionPane.showOptionDialog(Maze.mainWindow, ""Would you like to play again?"", ""Play again"", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
+    if (option == 0) {
+        Maze.getInstance().reset();
+    } else {
+        Maze.mainWindow.dispose();
+        System.exit(0);
+    }
+}",247
+40,"static public Object stringToValue(String s) {
+    if (s.equals("""")) {
+        return s;
+    }
+    if (s.equalsIgnoreCase(""true"")) {
+        return Boolean.TRUE;
+    }
+    if (s.equalsIgnoreCase(""false"")) {
+        return Boolean.FALSE;
+    }
+    if (s.equalsIgnoreCase(""null"")) {
+        return JSONObject.NULL;
+    }
+    char b = s.charAt(0);
+    if ((b >= '0' && b <= '9') || b == '.' || b == '-' || b == '+') {
+        if (b == '0') {
+            if (s.length() > 2 && (s.charAt(1) == 'x' || s.charAt(1) == 'X')) {
+                try {
+                    return new Integer(Integer.parseInt(s.substring(2), 16));
+                } catch (Exception e) {
+                }
+            } else {
+                try {
+                    return new Integer(Integer.parseInt(s, 8));
+                } catch (Exception e) {
+                }
+            }
+        }
+        try {
+            return new Integer(s);
+        } catch (Exception e) {
+            try {
+                return new Long(s);
+            } catch (Exception f) {
+                try {
+                    return new Double(s);
+                } catch (Exception g) {
+                }
+            }
+        }
+    }
+    return s;
+}",271
+15,"public void getMemInfoFromProc() {
+    int totalMem = 0;
+    int freeMem = 0;
+    int usedMem = 0;
+    FileReader reader = null;
+    BufferedReader br = null;
+    try {
+        reader = new FileReader(""/proc/meminfo"");
+        br = new BufferedReader(reader);
+        String str = null;
+        while ((str = br.readLine()) != null) {
+            StringBuilder sbb = new StringBuilder();
+            char c = ' ';
+            for (int i = 0; i < str.length(); i++) {
+                char ch = str.charAt(i);
+                if (ch != c) {
+                    sbb.append(ch);
+                }
+            }
+            str = sbb.toString();
+            String[] a = str.split("":"");
+            if (a[0].equals(""MemTotal"")) {
+                Matcher m = Pattern.compile(""\\d+"").matcher(a[1]);
+                while (m.find()) {
+                    totalMem = totalMem + Integer.parseInt(m.group(0));
+                    totalMem = totalMem / 1024;
+                }
+            }
+            if (a[0].equals(""MemFree"")) {
+                Matcher m = Pattern.compile(""\\d+"").matcher(a[1]);
+                while (m.find()) {
+                    freeMem = freeMem + Integer.parseInt(m.group(0));
+                    freeMem = freeMem / 1024;
+                }
+            }
+            usedMem = totalMem - freeMem;
+        }
+        SharedArea.dynamicInfoSerializable.setTotalMemory(totalMem);
+        SharedArea.dynamicInfoSerializable.setUsedMemory(usedMem);
+        SharedArea.dynamicInfoSerializable.setIdleMemory(freeMem);
+    } catch (FileNotFoundException e) {
+        LOG.error(LogUtils.getTrace(e));
+    } catch (IOException e) {
+        LOG.error(LogUtils.getTrace(e));
+    } finally {
+        try {
+            if (br != null)
+                br.close();
+            if (reader != null)
+                reader.close();
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+}",420
+19,"public void getDiskIOInfoByCmd() {
+    double ioTs = 0;
+    double readSpeed = 0;
+    double readKB = 0;
+    double writeSpeed = 0;
+    double writeKB = 0;
+    List<String> diskNameList = getDiskNameByFile();
+    String commond = ""iostat -d -k"";
+    BufferedInputStream bis = null;
+    BufferedReader br = null;
+    Runtime runtime = Runtime.getRuntime();
+    try {
+        Process p = runtime.exec(commond);
+        bis = new BufferedInputStream(p.getInputStream());
+        br = new BufferedReader(new InputStreamReader(bis));
+        String lineStr;
+        while ((lineStr = br.readLine()) != null) {
+            lineStr = lineStr.trim().replaceAll("" {2,}"", "" "");
+            String[] array = lineStr.split("" "");
+            if (diskNameList.contains(array[0])) {
+                ioTs += Double.parseDouble(array[1]);
+                readSpeed += Double.parseDouble(array[2]);
+                writeSpeed += Double.parseDouble(array[3]);
+                readKB += Double.parseDouble(array[4]);
+                writeKB += Double.parseDouble(array[5]);
+            }
+        }
+        readKB /= 1024;
+        writeKB /= 1024;
+        try {
+            if (p.waitFor() != 0) {
+                if (p.exitValue() == 1)
+                    LOG.error(""Command execution failed!"");
+            }
+        } catch (InterruptedException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    } catch (IOException e) {
+        LOG.error(LogUtils.getTrace(e));
+    } finally {
+        try {
+            if (br != null)
+                br.close();
+            if (bis != null)
+                bis.close();
+        } catch (IOException e) {
+            LOG.error(LogUtils.getTrace(e));
+        }
+    }
+    SharedArea.dynamicInfoSerializable.setIoTs((int) ioTs);
+    SharedArea.dynamicInfoSerializable.setReadKB((int) readKB);
+    SharedArea.dynamicInfoSerializable.setReadSpeed((int) readSpeed);
+    SharedArea.dynamicInfoSerializable.setWriteKB((int) writeKB);
+    SharedArea.dynamicInfoSerializable.setWriteSpeed((int) writeSpeed);
+}",452
+1,"public void run() throws InterruptedException {
+    final World world = new World();
+    final Object3D cube = new Object3D();
+    cube.setPrimitives(LinAlgUtils.createSphere(10f, 7, 7));
+    cube.setIdentifier(""sphere"");
+    cube.setModelMatrix(LinAlgUtils.translationMatrix(0, 7, 0));
+    cube.setForegroundColor(Color.BLUE);
+    for (int i = 0; i < NUM_CUBES; i++) {
+        Object3D tmp = makeRandomizedCopy(i + 1, cube);
+        world.addObject(tmp);
+    }
+    final AtomicReference<Float> fov = new AtomicReference<>(90.0f);
+    System.out.println(""*** setting perspective ***"");
+    world.setupPerspectiveProjection(90, 1.0f, Z_NEAR, Z_FAR);
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    System.out.println(""Frustum is now: "" + world.getFrustum());
+    System.out.println(""*** setting eye position and view vector ***"");
+    final Vector4 defaultEyePosition = vector(0, 0, 0);
+    final Camera camera = world.getCamera();
+    camera.setEyePosition(defaultEyePosition, vector(0, 0, -1));
+    camera.updateViewMatrix();
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    final SoftwareRenderer renderer = new SoftwareRenderer();
+    renderer.setAmbientLightFactor(0.25f);
+    renderer.setLightPosition(new Vector4(0, 100, 100));
+    renderer.setWorld(world);
+    final Panel3D canvas = new Panel3D(renderer) {
+        @Override
+        protected void panelResized(int newWidth, int newHeight) {
+            aspectRatio = newWidth / (float) newHeight;
+            world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+        }
+    };
+    final JFrame frame = new JFrame(""test"");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    canvas.setPreferredSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    canvas.setMinimumSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    frame.getContentPane().setLayout(new BorderLayout());
+    frame.getContentPane().add(canvas, BorderLayout.CENTER);
+    frame.pack();
+    frame.setVisible(true);
+    final MouseMotionTracker tracker = new MouseMotionTracker() {
+        private Cursor blankCursor;
+        {
+            final BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), ""blank cursor"");
+        }
+        @Override
+        protected void updateEyeTarget(float x, float y, float z) {
+            camera.setViewOrientation(new Vector4(x, y, z));
+            camera.updateViewMatrix();
+            canvas.repaint();
+        }
+        @Override
+        public void setTrackingEnabled(boolean trackingEnabled) {
+            super.setTrackingEnabled(trackingEnabled);
+            showOrHideMouseCursor(trackingEnabled);
+        }
+        private void showOrHideMouseCursor(boolean hide) {
+            if (hide) {
+                frame.getContentPane().setCursor(blankCursor);
+            } else {
+                frame.getContentPane().setCursor(Cursor.getDefaultCursor());
+            }
+        }
+    };
+    tracker.setViewOrientation(camera.getViewOrientation());
+    tracker.setTrackingEnabled(true);
+    frame.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            tracker.mouseMoved(e.getX(), e.getY());
+        }
+    });
+    frame.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                tracker.setTrackingEnabled(true);
+            }
+        }
+    });
+    frame.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusLost(FocusEvent e) {
+            tracker.setTrackingEnabled(false);
+        }
+    });
+    frame.addKeyListener(new KeyAdapter() {
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            int keyCode = e.getKeyCode();
+            switch(keyCode) {
+                case KeyEvent.VK_ESCAPE:
+                    tracker.setTrackingEnabled(false);
+                    break;
+                case KeyEvent.VK_PLUS:
+                    fov.set(fov.get() - 1);
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    break;
+                case KeyEvent.VK_MINUS:
+                    fov.set(fov.get() + 1);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    break;
+                case KeyEvent.VK_ENTER:
+                    tracker.reset();
+                    camera.reset();
+                    break;
+                case KeyEvent.VK_W:
+                    camera.moveForward(INC_Z);
+                    break;
+                case KeyEvent.VK_S:
+                    camera.moveBackward(INC_Z);
+                    break;
+                case KeyEvent.VK_A:
+                    camera.strafeLeft(INC_X);
+                    break;
+                case KeyEvent.VK_D:
+                    camera.strafeRight(INC_X);
+                    break;
+                case KeyEvent.VK_Q:
+                    camera.moveUp(INC_Y);
+                    break;
+                case KeyEvent.VK_E:
+                    camera.moveDown(INC_Y);
+                    break;
+                default:
+                    return;
+            }
+            camera.updateViewMatrix();
+        }
+    });
+    canvas.repaint();
+    float x1 = 10;
+    float y1 = 20;
+    float z1 = 30;
+    while (true) {
+        Matrix rot1 = LinAlgUtils.rotY(y1);
+        rot1 = rot1.multiply(LinAlgUtils.rotX(x1));
+        for (Object3D tmp : world.getObjects()) {
+            Matrix translation = (Matrix) tmp.getMetaData(Object3D.METADATA_TRANSLATION_MATRIX);
+            if (translation != null) {
+                rot1 = translation.multiply(rot1);
+            }
+            tmp.setModelMatrix(rot1.multiply(rot1));
+        }
+        canvas.repaint();
+        x1 += 0.5;
+        y1 += 1;
+        z1 += 1.5;
+        Thread.sleep(20);
+    }
+}",1270
+2,"public void run() throws InterruptedException {
+    final World world = new World();
+    final Object3D cube = new Object3D();
+    cube.setPrimitives(LinAlgUtils.createSphere(10f, 7, 7));
+    cube.setIdentifier(""sphere"");
+    cube.setModelMatrix(LinAlgUtils.translationMatrix(0, 7, 0));
+    cube.setForegroundColor(Color.BLUE);
+    for (int i = 0; i < NUM_CUBES; i++) {
+        Object3D tmp = makeRandomizedCopy(i + 1, cube);
+        world.addObject(tmp);
+    }
+    final AtomicReference<Float> fov = new AtomicReference<>(90.0f);
+    System.out.println(""*** setting perspective ***"");
+    world.setupPerspectiveProjection(90, 1.0f, Z_NEAR, Z_FAR);
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    System.out.println(""Frustum is now: "" + world.getFrustum());
+    System.out.println(""*** setting eye position and view vector ***"");
+    final Vector4 defaultEyePosition = vector(0, 0, 0);
+    final Camera camera = world.getCamera();
+    camera.setEyePosition(defaultEyePosition, vector(0, 0, -1));
+    camera.updateViewMatrix();
+    world.getFrustum().forceRecalculatePlaneDefinitions();
+    final SoftwareRenderer renderer = new SoftwareRenderer();
+    renderer.setAmbientLightFactor(0.25f);
+    renderer.setLightPosition(new Vector4(0, 100, 100));
+    renderer.setWorld(world);
+    final Panel3D canvas = new Panel3D(renderer) {
+        @Override
+        protected void panelResized(int newWidth, int newHeight) {
+            aspectRatio = newWidth / (float) newHeight;
+            world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+        }
+    };
+    final JFrame frame = new JFrame(""test"");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    canvas.setPreferredSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    canvas.setMinimumSize(new Dimension(INITIAL_CANVAS_WIDTH, INITIAL_CANVAS_HEIGHT));
+    frame.getContentPane().setLayout(new BorderLayout());
+    frame.getContentPane().add(canvas, BorderLayout.CENTER);
+    frame.pack();
+    frame.setVisible(true);
+    final MouseMotionTracker tracker = new MouseMotionTracker() {
+        private Cursor blankCursor;
+        {
+            final BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), ""blank cursor"");
+        }
+        @Override
+        protected void updateEyeTarget(float x, float y, float z) {
+            camera.setViewOrientation(new Vector4(x, y, z));
+            camera.updateViewMatrix();
+            canvas.repaint();
+        }
+        @Override
+        public void setTrackingEnabled(boolean trackingEnabled) {
+            super.setTrackingEnabled(trackingEnabled);
+            showOrHideMouseCursor(trackingEnabled);
+        }
+        private void showOrHideMouseCursor(boolean hide) {
+            if (hide) {
+                frame.getContentPane().setCursor(blankCursor);
+            } else {
+                frame.getContentPane().setCursor(Cursor.getDefaultCursor());
+            }
+        }
+    };
+    tracker.setViewOrientation(camera.getViewOrientation());
+    tracker.setTrackingEnabled(true);
+    frame.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            tracker.mouseMoved(e.getX(), e.getY());
+        }
+    });
+    frame.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                tracker.setTrackingEnabled(true);
+            }
+        }
+    });
+    frame.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusLost(FocusEvent e) {
+            tracker.setTrackingEnabled(false);
+        }
+    });
+    frame.addKeyListener(new KeyAdapter() {
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            int keyCode = e.getKeyCode();
+            switch(keyCode) {
+                case KeyEvent.VK_ESCAPE:
+                    tracker.setTrackingEnabled(false);
+                    break;
+                case KeyEvent.VK_PLUS:
+                    fov.set(fov.get() - 1);
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    break;
+                case KeyEvent.VK_MINUS:
+                    fov.set(fov.get() + 1);
+                    System.out.println(""FoV: "" + fov.get() + "" degrees"");
+                    world.setupPerspectiveProjection(fov.get(), aspectRatio, Z_NEAR, Z_FAR);
+                    break;
+                case KeyEvent.VK_ENTER:
+                    tracker.reset();
+                    camera.reset();
+                    break;
+                case KeyEvent.VK_W:
+                    camera.moveForward(INC_Z);
+                    break;
+                case KeyEvent.VK_S:
+                    camera.moveBackward(INC_Z);
+                    break;
+                case KeyEvent.VK_A:
+                    camera.strafeLeft(INC_X);
+                    break;
+                case KeyEvent.VK_D:
+                    camera.strafeRight(INC_X);
+                    break;
+                case KeyEvent.VK_Q:
+                    camera.moveUp(INC_Y);
+                    break;
+                case KeyEvent.VK_E:
+                    camera.moveDown(INC_Y);
+                    break;
+                default:
+                    return;
+            }
+            camera.updateViewMatrix();
+        }
+    });
+    canvas.repaint();
+    float x1 = 10;
+    float y1 = 20;
+    float z1 = 30;
+    while (true) {
+        Matrix rot1 = LinAlgUtils.rotY(y1);
+        rot1 = rot1.multiply(LinAlgUtils.rotX(x1));
+        for (Object3D tmp : world.getObjects()) {
+            Matrix translation = (Matrix) tmp.getMetaData(Object3D.METADATA_TRANSLATION_MATRIX);
+            if (translation != null) {
+                rot1 = translation.multiply(rot1);
+            }
+            tmp.setModelMatrix(rot1.multiply(rot1));
+        }
+        canvas.repaint();
+        x1 += 0.5;
+        y1 += 1;
+        z1 += 1.5;
+        Thread.sleep(20);
+    }
+}",1270

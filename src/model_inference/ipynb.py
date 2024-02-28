@@ -10,20 +10,23 @@ client = OpenAI(
   api_key='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',  # 0226
 )
 
+LEN_ICLSET = 61
+DEFAULT_MODEL = "gpt-3.5-turbo-0125"
 INPUT_TOKEN_LIMIT = 16385 - 4096  # 12289, output_max = 4k, total_max = 16k
 ICLSET_FILEPATH = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/iclset.csv'
 VALSET_FILEPATH = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/valset.csv'
 COMPLEXITY_DIR = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/complexity/'
+SIMILARITY_DIR = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/SIMILARITY/'
 RESPONSE_DIR = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/response/'
 
 # 计算源代码的长度
-def num_tokens_from_string(string: str, model = "gpt-3.5-turbo") -> int:
+def num_tokens_from_string(string: str, model = DEFAULT_MODEL) -> int:
     """Returns the number of tokens in a text string."""
     encoding = tiktoken.encoding_for_model(model)
     num_tokens = len(encoding.encode(string))
     return num_tokens
 
-def get_response(prompt, model = 'gpt-3.5-turbo'):
+def get_response(prompt, model = DEFAULT_MODEL):
     try:
         response = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
@@ -68,6 +71,7 @@ def extract_and_save_info_from_response(r, program_idx, idx, r_saved_filepath):
       writer.writerow(['program_idx', 'idx', 'id', 'model', 'choices', 'message', 'content', 'role',
                        'function_call', 'tool_calls', 'usage', 'completion_tokens', 'prompt_tokens', 'total_tokens'])
     writer.writerow(row)
+    csvfile.flush()
 
 # 准备工作
 def get_length_of_csv(written_filepath):
@@ -78,17 +82,15 @@ def get_length_of_csv(written_filepath):
     row_count = sum(1 for row in written_csv_reader)
   return row_count 
 
-def newFile(written_filepath):
+def new_result_file(written_filepath, header):
   if os.path.exists(written_filepath):
     return
   with open(written_filepath, 'a', encoding='gbk') as written_file:
     written_csv_writer = csv.writer(written_file)
-    new_row = ['program_idx', 'idx', 'response', 'result']
-    written_csv_writer.writerow(new_row)
-
+    written_csv_writer.writerow(header)
   print('添加完表头后该文件的 length：', get_length_of_csv(written_filepath))
 
-def read_complexity_ids_from_file(complexity_dir = 'data/complexity/', model = 'gpt-3.5-turbo', example_num = 60):
+def read_complexity_ids_from_file(complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL, example_num = LEN_ICLSET):
   # 从文件中读取排序后的结果，并返回指定数量的记录
   complexity_filepath = complexity_dir + model + '_' + 'complexity_example_ids.csv'
   with open(complexity_filepath, 'r', newline='') as csvfile:
@@ -98,7 +100,7 @@ def read_complexity_ids_from_file(complexity_dir = 'data/complexity/', model = '
         return eval(row['ids'])
   return [11, 18, 29, 35, 50, 67, 78, 87, 95, 107, 145, 271]
 
-def read_similarity_ids_from_file(similarity_dir = 'data/similarity/', model = 'gpt-3.5-turbo', example_num = 20):
+def read_similarity_ids_from_file(similarity_dir = SIMILARITY_DIR, model = DEFAULT_MODEL, example_num = 20):
   print()
   
 
@@ -107,7 +109,7 @@ def get_icl_examples_by_ids(ids, example_num = 12):
   ids = ids[:example_num]
   examples = []
   for id in ids:
-    examples.append(get_example(id, '', ''))
+    examples.append(get_prompt_example_by(id, '', ''))
   return examples
 
 
@@ -200,10 +202,11 @@ def do_experiment(few_shot_examples, caller, caller_fqn, callee_fqn, funcname, c
 # 读取文件 valset.csv
 # 读取已完成的文件的内容
 def record_result_to_file(model, valset_filepath, example_type, example_num):
-  example_num_str = 'inf'
+  example_num_str = 'inf' if example_num > 60 else str(example_num)
   written_filepath = RESPONSE_DIR + model + '_' + example_type + '_' + example_num_str + '.csv'
   if not os.path.exists(written_filepath):
-    newFile(written_filepath)
+    new_result_file(written_filepath, ['program_idx', 'idx', 'src', 'dst', 'src_code', 'dst_code', 'response_content', 'ids', 'ids_len'])
+  r_saved_filepath = RESPONSE_DIR + model + '_' + example_type + '_' + example_num_str + '_response.csv'
 
   # 读取到了第几行
   start_row = get_length_of_csv(written_filepath)
@@ -224,17 +227,17 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
         if example_type == 'complexity':
           ids = read_complexity_ids_from_file(complexity_dir = COMPLEXITY_DIR, model = model, example_num=example_num)
         elif example_type == 'random':
-          ids = random.sample(range(60), example_num)
+          ids = random.sample(range(LEN_ICLSET), example_num)
         elif example_type == 'similarity':
           # 当前数据的 input
           cur_input = get_input(caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, mvs=mvs)
-          # TODO:找到和 cur_input 最相似的向量，找前 20 个
+          # TODO:找到和 cur_input 最相似的向量
           print()
         few_shot_examples = get_icl_examples_by_ids(ids, example_num)
         
         response, response_content, prompt = do_experiment(few_shot_examples=few_shot_examples, caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, callee_ancestors=dst_ancestors, callee_descendants=dst_descendants, mvs=mvs)
         # 1. 记录回复的 response
-        extract_and_save_info_from_response(r = response, program_idx=program_idx, idx=idx, r_saved_filepath=RESPONSE_DIR+'test1.csv')
+        extract_and_save_info_from_response(r = response, program_idx=program_idx, idx=idx, r_saved_filepath=r_saved_filepath)
         response_content = response_content.replace('"', '""')
         # 2. 记录 few-shot 的 examples
         ids_len = len(ids)
@@ -245,4 +248,4 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
         time.sleep(20)
 
 
-record_result_to_file(model='gpt-3.5-turbo', valset_filepath=VALSET_FILEPATH, example_type='complexity', example_num=60)
+record_result_to_file(model=DEFAULT_MODEL, valset_filepath=VALSET_FILEPATH, example_type='complexity', example_num=61)

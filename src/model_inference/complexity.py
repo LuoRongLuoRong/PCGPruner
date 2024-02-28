@@ -112,6 +112,6 @@ def test_read():
 if __name__ == '__main__':
     # test_save()
     # test_read()
-    save_ids_to_file()
-    # result = read_ids_from_file(example_num=2)
-    # print(result)
+    # save_ids_to_file()
+    result = read_ids_from_file(example_num=2)
+    print(result)
