@@ -14,7 +14,7 @@ client = OpenAI(
   # api_key='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' # 0229
 )
 
-LEN_ICLSET = 61
+LEN_ICLSET = 60
 DEFAULT_MODEL = "gpt-3.5-turbo-0125"
 INPUT_TOKEN_LIMIT = 16385 - 4096  # 12289, output_max = 4k, total_max = 16k
 ICLSET_FILEPATH = '/content/drive/MyDrive/ColabNotebooks/datasetFeb2024/iclset.csv'
@@ -275,6 +275,7 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
         # 对每行数据进行处理
         program_idx,file_path,idx,src,dst,src_code,dst_code,reason,offset,sa_lb_direct,sa_lb,da_lb,dst_name_match,dst_funcname,actual_lb,actual_lb_trans,is_static,src_class,mvs,src_ancestors,src_descendants,dst_class,dst_ancestors,dst_descendants = row
         print(program_idx,idx)
+        
         ids = []
         few_shot_examples = []
         if example_type == 'complexity':

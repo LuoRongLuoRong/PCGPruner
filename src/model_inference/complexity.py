@@ -85,7 +85,7 @@ def save_ids_to_file(complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL):
         fieldnames = ['example_num', 'ids']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for example_num in range(1, 61):
+        for example_num in range(1, 60):
             ids = get_iclset_ids_complexity(model, example_num)
             writer.writerow({'example_num': example_num, 'ids': ids})
             # print(ids)

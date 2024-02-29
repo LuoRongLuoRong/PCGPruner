@@ -4,7 +4,7 @@ import json
 import os
 
 RESPONSE_DIR = ''
-LEN_ICLSET = 61
+LEN_ICLSET = 60
 
 def get_length_of_csv(written_filepath):
   # 获取已有行的数量
@@ -59,7 +59,7 @@ def extract_content(json_string):
         print('模型输出不规范', json_string)
     return content        
 
-# cot_steps(model='gpt-3.5-turbo-0125', example_num=61)
+# cot_steps(model='gpt-3.5-turbo-0125', example_num=60)
 # cot_steps(model='gpt-3.5-turbo-0125', example_num=12)
 
 # str1 = '''[

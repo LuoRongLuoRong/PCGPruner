@@ -2,7 +2,7 @@
 
 MAX_LEN_OF_DATA_FROM_ONE_PROGRAM = 2000
 MIN_LEN_OF_METHOD = 8
-LEN_ICLSET = 61
+LEN_ICLSET = 60
 
 NJR_DATASET = '../CGPruner/june2020_dataset/'
 CLASS_HIERARCHY_DIR = 'info/class_hierarchy/'

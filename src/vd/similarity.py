@@ -4,6 +4,7 @@
 # and execute a vector similarity search.
 
 import random
+import csv
 
 from milvus import Milvus, IndexType, MetricType, Status
 
@@ -18,22 +19,31 @@ _DIM = 1536  # dimension of vector
 
 _INDEX_FILE_SIZE = 32  # max file size of stored index
 
-# 首先，代码连接到 Milvus 服务器，并定义了一些参数，如服务器地址（_HOST）、端口号（_PORT）、向量维度（_DIM）等。
+ICLSET_VEC_FILEPATH = 'data/vector/iclset_vec.csv'
+VALSET_VEC_FILEPATH = 'data/vector/valset_vec.csv'
+SIMILARITY_DIR = 'data/similarity/'
 
-# 然后，代码检查是否已经存在一个名为 example_collection_ 的集合，如果不存在，则创建一个新的集合，其中包括集合的维度、索引文件大小和度量类型。
+def get_vectors(dataset_vec_filepath):
+    vectors = []
+    with open(dataset_vec_filepath, 'r') as dataset_file:
+        # 逐行读取CSV数据
+        reader = csv.DictReader(dataset_file)
+        for row in reader:
+            # if dataset_vec_filepath == ICLSET_VEC_FILEPATH:
+            #     print(row['id'])
+            vec = row['input_vec']
+            vector = eval(vec)
+            vectors.append(vector)
+        print(len(vectors))
+    return vectors
 
-# 接下来，代码生成了一些随机向量，并将这些向量插入到刚刚创建的集合中。随后，代码进行了一些操作，如刷新数据到磁盘、获取集合的行数和统计信息等。
-
-# 然后，代码获取了插入的向量的原始值，并为这些向量创建了索引，以加速后续的相似性搜索操作。然后，使用一部分插入的向量作为查询向量，执行了相似性搜索，并打印了搜索结果。
-
-# 最后，代码删除了创建的集合。
-
-def build_vd(collection_name, vectors):
+def main():
     # Specify server addr when create milvus client instance
     # milvus client instance maintain a connection pool, param
     # `pool_size` specify the max connection num.
     milvus = Milvus(_HOST, _PORT)
 
+    collection_name = 'luorong_test_collection'
     status, ok = milvus.has_collection(collection_name)
     if not ok:
         print("重新创建一个喽！")
@@ -50,60 +60,54 @@ def build_vd(collection_name, vectors):
     _, collections = milvus.list_collections()
     # Describe demo_collection
     _, collection = milvus.get_collection_info(collection_name)
+    print(collection)
     
     # 100 vectors with 1536 dimension
     # element per dimension is float32 type
     # vectors should be a 2-D array
-    # vectors = [[random.random() for _ in range(_DIM)] for _ in range(10)]
+    # vectors = [[random.random() for _ in range(_DIM)] for _ in range(61)]
+    iclset_vectors = get_vectors(ICLSET_VEC_FILEPATH)
+    valset_vectors = get_vectors(VALSET_VEC_FILEPATH)
 
-
-def main():
     # Insert vectors into demo_collection, return status and vectors id list
-    status, ids = milvus.insert(collection_name=collection_name, records=vectors)
+    status, milvus_ids = milvus.insert(collection_name=collection_name, records=iclset_vectors)
     if not status.OK():
         print("Insert failed: {}".format(status))
+    milvus_id2id = {}
+    for i in range(len(milvus_ids)):
+        id = i if i < 27 else i + 1
+        milvus_id2id[milvus_ids[i]] = id
+    print(milvus_id2id)
 
-    # Flush collection  inserted data to disk.
+    # Flush collection inserted data to disk.
     milvus.flush([collection_name])
-    # Get demo_collection row count
-    status, result = milvus.count_entities(collection_name)
+    # Get demo_collection row count 数据库中的数目
+    status, result = milvus.count_entities(collection_name) 
 
     # present collection statistics info
     _, info = milvus.get_collection_stats(collection_name)
-    print(info)
+    # info = {'partitions': [{'row_count': 61, 'segments': [{'data_size': 375272, 'index_name': 'IDMAP', 'name': '1709234662417072000', 'row_count': 61}], 'tag': '_default'}], 'row_count': 61}
 
-    # Obtain raw vectors by providing vector ids
-    status, result_vectors = milvus.get_entity_by_id(collection_name, ids[:10])
-
-    # create index of vectors, search more rapidly
-    index_param = {
-        'nlist': 2048
-    }
-
-    # Create ivflat index in demo_collection
-    # You can search vectors without creating index. however, Creating index help to
-    # search faster
-    print("Creating index: {}".format(index_param))
-    status = milvus.create_index(collection_name, IndexType.IVF_FLAT, index_param)
+    # # Obtain raw vectors by providing vector ids
+    # status, result_vectors = milvus.get_entity_by_id(collection_name, ids[:10])
 
     # describe index, get information of index
     status, index = milvus.get_index_info(collection_name)
     print(index)
 
-    # Use the top 10 vectors for similarity search
-    query_vectors = vectors[0:10]
+    # Use the all vectors for similarity search
+    query_vectors = valset_vectors
 
     # execute vector similarity search
-    search_param = {
-        "nprobe": 16
-    }
+    NPROBE = 100
+    search_param = { "nprobe": NPROBE }
 
     print("Searching ... ")
 
     param = {
         'collection_name': collection_name,
         'query_records': query_vectors,
-        'top_k': 1,
+        'top_k': 20,  # 最相似的代码
         'params': search_param,
     }
 
@@ -112,19 +116,66 @@ def main():
         # indicate search result
         # also use by:
         #   `results.distance_array[0][0] == 0.0 or results.id_array[0][0] == ids[0]`
-        if results[0][0].distance == 0.0 or results[0][0].id == ids[0]:
-            print('Query result is correct')
-        else:
-            print('Query result isn\'t correct')
+        # if results[0][0].distance == 0.0 or results[0][0].id == ids[0]:
+        #     print('Query result is correct')
+        # else:
+        #     print('Query result isn\'t correct')
 
         # print results
-        print(results)
+        valset_ids = []
+        for i in range(len(query_vectors)):
+            m_ids = results.id_array[i] 
+            print(m_ids)
+            ids = []
+            for m_id in m_ids:
+                print(m_id)
+                id = milvus_id2id[m_id]
+                print(id)
+                ids.append(id)
+            print(ids)
+            valset_ids.append(ids)
+        
+        with open(SIMILARITY_DIR + 'text-embedding-3-small-' + str(NPROBE) + '.csv', 'w') as written_file:
+            written_csv_writer = csv.writer(written_file)
+            written_csv_writer.writerow(['program_idx','idx','ids'])
+            with open(VALSET_VEC_FILEPATH, 'r') as dataset_file:
+                # 逐行读取CSV数据
+                dataset_csv_reader = csv.reader(dataset_file)
+                # 跳过 header
+                next(dataset_csv_reader)
+                # 逐行读取CSV数据
+                for i, row in enumerate(dataset_csv_reader):
+                    print(i)
+                    program_idx,file_path,idx,src,dst,src_code,dst_code,reason,offset,sa_lb_direct,sa_lb,da_lb,dst_name_match,dst_funcname,actual_lb,actual_lb_trans,is_static,src_class,mvs,src_ancestors,src_descendants,dst_class,dst_ancestors,dst_descendants,input_vec = row
+                    written_csv_writer.writerow([program_idx, idx, valset_ids[i]])
+            
     else:
         print("Search failed. ", status)
 
     # Delete demo_collection
-    # status = milvus.drop_collection(collection_name)
+    status = milvus.drop_collection(collection_name)
 
 
 if __name__ == '__main__':
     main()
+    # valset_strs = []
+    # with open('data/valset.csv', 'r') as dataset_file:
+    #     # 逐行读取CSV数据
+    #     reader = csv.DictReader(dataset_file)
+    #     for row in reader:
+    #         # if dataset_vec_filepath == ICLSET_VEC_FILEPATH:
+    #         #     print(row['id'])
+    #         valset_strs.append(row['program_idx'] + ',' + row['idx'])
+            
+    # vec_strs = []
+    # with open('data/similarity/text-embedding-3-small.csv', 'r') as dataset_file:
+    #     # 逐行读取CSV数据
+    #     reader = csv.DictReader(dataset_file)
+    #     for row in reader:
+    #         # if dataset_vec_filepath == ICLSET_VEC_FILEPATH:
+    #         #     print(row['id'])
+    #         vec_strs.append(row['program_idx'] + ',' + row['idx'])
+    
+    # print(len(valset_strs))
+    # print(len(vec_strs))
+
