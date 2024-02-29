@@ -1,5 +1,6 @@
 import time
 import os
+import json
 import csv
 import random
 from openai import OpenAI
@@ -7,7 +8,10 @@ import tiktoken
 
 client = OpenAI(
   # This is the default and can be omitted
-  api_key='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',  # 0226
+  # api_key='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',  # 0226
+  # api_key='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'  # 0229
+  api_key='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'  # 0229
+  # api_key='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' # 0229
 )
 
 LEN_ICLSET = 61
@@ -26,6 +30,8 @@ def num_tokens_from_string(string: str, model = DEFAULT_MODEL) -> int:
     num_tokens = len(encoding.encode(string))
     return num_tokens
 
+# An error occurred: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-3.5-turbo-0125 in organization org-nKZBuqZzkg6K1yshRGsCgFq8 on requests per day (RPD): Limit 200, Used 200, Requested 1. Please try again in 7m12s. Visit https://platform.openai.com/account/rate-limits to learn more. You can increase your rate limit by adding a payment method to your account at https://platform.openai.com/account/billing.', 'type': 'requests', 'param': None, 'code': 'rate_limit_exceeded'}}
+# An error occurred: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-3.5-turbo-0125 in organization org-nKZBuqZzkg6K1yshRGsCgFq8 on requests per min (RPM): Limit 3, Used 3, Requested 1. Please try again in 20s. Visit https://platform.openai.com/account/rate-limits to learn more. You can increase your rate limit by adding a payment method to your account at https://platform.openai.com/account/billing.', 'type': 'requests', 'param': None, 'code': 'rate_limit_exceeded'}}
 def get_response(prompt, model = DEFAULT_MODEL):
     try:
         response = client.chat.completions.create(
@@ -36,8 +42,15 @@ def get_response(prompt, model = DEFAULT_MODEL):
         return response
     except Exception as e:
         # 处理异常，例如输出错误信息或者等待一段时间后重新发送请求
-        print(f"An error occurred: {str(e)}")
-        time.sleep(5)  # 等待5秒后重新发送请求
+        exception_info = str(e)
+        print(f"An error occurred: {exception_info}")
+        if 'per day (RPD)' in exception_info:
+          return ''
+        elif 'per min (RPM)' in exception_info:
+          time.sleep(20)
+          return get_response(prompt, model)
+        # 其他异常，静观其变
+        time.sleep(5) # 等待5秒后重新发送请求
         return get_response(prompt, model)  # 递归调用函数
 
 def get_response_content(r):
@@ -80,29 +93,68 @@ def get_length_of_csv(written_filepath):
   with open(written_filepath, 'r', encoding='gbk') as written_file:
     written_csv_reader = csv.reader(written_file)
     row_count = sum(1 for row in written_csv_reader)
-  return row_count 
+  return row_count
 
 def new_result_file(written_filepath, header):
   if os.path.exists(written_filepath):
     return
-  with open(written_filepath, 'a', encoding='gbk') as written_file:
+  with open(written_filepath, 'w', encoding='gbk') as written_file:
     written_csv_writer = csv.writer(written_file)
     written_csv_writer.writerow(header)
   print('添加完表头后该文件的 length：', get_length_of_csv(written_filepath))
 
+# 拿到大语言模型的结果后，将其分解为 cot 的中间步骤
+def cot_steps(model, example_type='complexity', example_num=0):
+    example_num_str = 'inf' if example_num >= LEN_ICLSET else str(example_num)
+    result_filepath = RESPONSE_DIR + model + '_' + example_type + '_' + example_num_str + '.csv'
+
+    cot_steps_filepath = RESPONSE_DIR + model + '_' + example_type + '_' + example_num_str + '_cot_steps.csv'
+    new_result_file(cot_steps_filepath, ['program_idx', 'idx', 'src', 'dst', 'src_code', 'dst_code', 'response_content', 'ids', 'ids_len', 'invocation_line', 'receiver_object', 'declared_type', 'runtime_type', 'answer', 'your_explanation'])
+    with open(cot_steps_filepath, 'a') as written_file:
+        cot_steps_csv_writer = csv.writer(written_file)
+        with open(result_filepath, 'r') as file:
+            header = ['program_idx', 'idx', 'src', 'dst', 'src_code', 'dst_code', 'response_content', 'ids', 'ids_len']
+            csv_reader = csv.reader(file)
+            next(csv_reader)  # 跳过首行
+            for i, row in enumerate(csv_reader, start=1):
+                program_idx, idx, src, dst, src_code, dst_code, response_content, ids, ids_len = row
+                # print(response_content)
+                cot_results = extract_content(response_content)
+                invocation_line = cot_results.get('invocation_line', '')
+                receiver_object = cot_results.get('receiver_object', '')
+                declared_type = cot_results.get('declared_type', '')
+                runtime_type = cot_results.get('runtime_type', '')
+                answer = cot_results.get('answer', '')
+                your_explanation = cot_results.get('your_explanation', '')
+
+                new_row = [program_idx, idx, src, dst, src_code, dst_code, response_content, ids, ids_len, invocation_line, receiver_object, declared_type, runtime_type, answer, your_explanation]
+                cot_steps_csv_writer.writerow(new_row)
+#
+def extract_content(json_string):
+    json_string = json_string.replace('""', '"')
+    content = {}
+    try:
+        parsed_data = json.loads(json_string)
+        for key, value in parsed_data.items():
+            content[key] = value
+    except:
+        print('模型输出不规范', json_string)
+    return content
+
 def read_complexity_ids_from_file(complexity_dir = COMPLEXITY_DIR, model = DEFAULT_MODEL, example_num = LEN_ICLSET):
-  # 从文件中读取排序后的结果，并返回指定数量的记录
+  if example_num <= 0:
+    return []
   complexity_filepath = complexity_dir + model + '_' + 'complexity_example_ids.csv'
   with open(complexity_filepath, 'r', newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-      if int(row['example_num']) == example_num:
+      if int(row['example_num']) == int(example_num):
         return eval(row['ids'])
-  return [11, 18, 29, 35, 50, 67, 78, 87, 95, 107, 145, 271]
+  return [5, 59, 28, 47, 51, 13, 0, 24, 7, 45, 46, 42, 29, 9, 12, 14, 32, 57, 48, 17, 38, 43, 44, 33, 21, 60, 16, 18, 8, 41, 23, 30, 35, 6, 3, 4, 56, 20, 49, 58, 11, 36, 22, 26, 55, 37, 31, 50, 52, 25, 39, 53, 54, 34, 10, 40, 15, 19, 1, 2]
 
-def read_similarity_ids_from_file(similarity_dir = SIMILARITY_DIR, model = DEFAULT_MODEL, example_num = 20):
+def read_similarity_ids_from_file(input, similarity_dir = SIMILARITY_DIR, model = DEFAULT_MODEL, example_num = 20):
   print()
-  
+
 
 def get_icl_examples_by_ids(ids, example_num = 12):
   # 顺序一：简洁度
@@ -140,17 +192,17 @@ def get_output(invocation_line, receiver_object, declared_type, runtime_type,
   "runtime_type":"{runtime_type}",
   "answer":"{method_x_calls_method_y}",
   "your_explanation":"{your_explanation}"]}}"""
-  
+
 
 def get_prompt_example(caller, caller_fqn, callee_fqn, caller_class, callee_class, funcname,
                caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs,
                invocation_line, receiver_object, declared_type, runtime_type,
                method_x_calls_method_y, your_explanation):
-  
+
   return get_input(caller, caller_fqn, callee_fqn, caller_class, callee_class, funcname,
                caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs) + get_output(invocation_line, receiver_object, declared_type, runtime_type, method_x_calls_method_y, your_explanation)
-               
-               
+
+
 def get_prompt_example_by(id='-1', expected_program_idx='-1', expected_idx='-1', iclset_filepath=ICLSET_FILEPATH):
   example = ''
   with open(iclset_filepath, 'r') as f:
@@ -195,13 +247,15 @@ Format your response as a JSON object with keys ["invocation_line", "receiver_ob
 def do_experiment(few_shot_examples, caller, caller_fqn, callee_fqn, funcname, caller_class, callee_class, caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs):
   prompt = get_prompt_icl(few_shot_examples, caller, caller_fqn, callee_fqn, funcname, caller_class, callee_class, caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs)
   response = get_response(prompt=prompt)
+  if response == '':
+    return '', '', ''
   response_content = get_response_content(response)
   return response, response_content, prompt
 
 # 读取文件 valset.csv
 # 读取已完成的文件的内容
 def record_result_to_file(model, valset_filepath, example_type, example_num):
-  example_num_str = 'inf' if example_num > 60 else str(example_num)
+  example_num_str = 'inf' if example_num >= LEN_ICLSET else str(example_num)
   written_filepath = RESPONSE_DIR + model + '_' + example_type + '_' + example_num_str + '.csv'
   if not os.path.exists(written_filepath):
     new_result_file(written_filepath, ['program_idx', 'idx', 'src', 'dst', 'src_code', 'dst_code', 'response_content', 'ids', 'ids_len'])
@@ -209,7 +263,7 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
 
   # 读取到了第几行
   start_row = get_length_of_csv(written_filepath)
-  with open(written_filepath, 'a', encoding='gbk') as written_file:
+  with open(written_filepath, 'a') as written_file:
     written_csv_writer = csv.writer(written_file)
     with open(valset_filepath, 'r') as dataset_file:
       dataset_csv_reader = csv.reader(dataset_file)
@@ -220,7 +274,7 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
       for i, row in enumerate(dataset_csv_reader, start=1):
         # 对每行数据进行处理
         program_idx,file_path,idx,src,dst,src_code,dst_code,reason,offset,sa_lb_direct,sa_lb,da_lb,dst_name_match,dst_funcname,actual_lb,actual_lb_trans,is_static,src_class,mvs,src_ancestors,src_descendants,dst_class,dst_ancestors,dst_descendants = row
-        
+        print(program_idx,idx)
         ids = []
         few_shot_examples = []
         if example_type == 'complexity':
@@ -233,8 +287,10 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
           # TODO:找到和 cur_input 最相似的向量
           print()
         few_shot_examples = get_icl_examples_by_ids(ids, example_num)
-        
+
         response, response_content, prompt = do_experiment(few_shot_examples=few_shot_examples, caller=src_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, callee_ancestors=dst_ancestors, callee_descendants=dst_descendants, mvs=mvs)
+        if response == '':
+          return # 报错了，终止程序
         # 1. 记录回复的 response
         extract_and_save_info_from_response(r = response, program_idx=program_idx, idx=idx, r_saved_filepath=r_saved_filepath)
         response_content = response_content.replace('"', '""')
@@ -244,7 +300,7 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
         written_csv_writer.writerow(new_row)
         written_file.flush()
 
-        time.sleep(20)
+        # time.sleep(20)
+  cot_steps(model=model, example_num=example_num)
 
-
-record_result_to_file(model=DEFAULT_MODEL, valset_filepath=VALSET_FILEPATH, example_type='complexity', example_num=61)
+record_result_to_file(model=DEFAULT_MODEL, valset_filepath=VALSET_FILEPATH, example_type='complexity', example_num=0)
