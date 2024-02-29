@@ -239,7 +239,7 @@ program_idx,file_path,idx,src,dst,src_code,dst_code,reason,offset,sa_lb_direct,s
     commandController.start();
     gladiatorEngine.waitForFinish();
     commandController.stop();
-    logger.info(""Terminaci§Ú§àn normal de programa"");
+    logger.info(""Terminaci normal de programa"");
 }","@Override
 public synchronized void start() {
     if (stopped) {
@@ -260,7 +260,7 @@ public synchronized void start() {
     commandController.start();
     gladiatorEngine.waitForFinish();
     commandController.stop();
-    logger.info(""Terminaci§Ú§àn normal de programa"");
+    logger.info(""Terminaci normal de programa"");
 }","@Override
 public synchronized void stop() {
     stopped = true;

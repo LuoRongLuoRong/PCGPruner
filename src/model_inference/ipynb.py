@@ -109,7 +109,7 @@ def get_icl_examples_by_ids(ids, example_num = 12):
   ids = ids[:example_num]
   examples = []
   for id in ids:
-    examples.append(get_prompt_example_by(id, '', ''))
+    examples.append(get_prompt_example_by(id=id))
   return examples
 
 
@@ -148,11 +148,10 @@ def get_prompt_example(caller, caller_fqn, callee_fqn, caller_class, callee_clas
                method_x_calls_method_y, your_explanation):
   
   return get_input(caller, caller_fqn, callee_fqn, caller_class, callee_class, funcname,
-               caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs) + get_output(invocation_line, receiver_object, declared_type, runtime_type,
-               method_x_calls_method_y, your_explanation)
+               caller_ancestors, caller_descendants, callee_ancestors, callee_descendants, mvs) + get_output(invocation_line, receiver_object, declared_type, runtime_type, method_x_calls_method_y, your_explanation)
                
                
-def get_prompt_example_by(id, expected_program_idx, expected_idx, iclset_filepath=ICLSET_FILEPATH):
+def get_prompt_example_by(id='-1', expected_program_idx='-1', expected_idx='-1', iclset_filepath=ICLSET_FILEPATH):
   example = ''
   with open(iclset_filepath, 'r') as f:
     dataset_csv_reader = csv.reader(f)
@@ -161,7 +160,7 @@ def get_prompt_example_by(id, expected_program_idx, expected_idx, iclset_filepat
     for i, row in enumerate(dataset_csv_reader, start=1):
       id,program_idx,file_path,idx,src,dst,src_code,dst_code,sa_lb_direct,sa_lb,da_lb,dst_name_match,dst_funcname,actual_lb,actual_lb_trans,is_static,src_class,mvs,src_ancestors,src_descendants,dst_class,dst_ancestors,dst_descendants,invocation_line,receiver_object,declared_type,runtime_type,class_B,method_x_calls_method_y,your_explanation=row
       if int(id) == int(id) or (int(program_idx) == int(expected_program_idx) and int(expected_idx) == int(idx)):
-        example = get_prompt_example(caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, caller_class=src_class, funcname=dst_funcname,
+        example = get_prompt_example(caller=src_code, caller_fqn=src, callee_fqn=dst, caller_class=src_class, funcname=dst_funcname,
                           callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, callee_ancestors=dst_ancestors, callee_descendants=dst_descendants, mvs=mvs,
                           invocation_line=invocation_line, receiver_object=receiver_object, declared_type=declared_type, runtime_type=runtime_type,
                           method_x_calls_method_y=method_x_calls_method_y, your_explanation=your_explanation)
@@ -186,7 +185,7 @@ Format your response as a JSON object with keys ["invocation_line", "receiver_ob
   for item in few_shot_examples:
     program_idx = item[0]
     idx = item[1]
-    example = get_prompt_example_by(program_idx, idx)
+    example = get_prompt_example_by(expected_program_idx=program_idx, expected_idx=idx)
     if num_tokens_from_string(example) + num_tokens_from_string(pre + cur_input) > INPUT_TOKEN_LIMIT:
       continue
     pre += example
@@ -235,7 +234,7 @@ def record_result_to_file(model, valset_filepath, example_type, example_num):
           print()
         few_shot_examples = get_icl_examples_by_ids(ids, example_num)
         
-        response, response_content, prompt = do_experiment(few_shot_examples=few_shot_examples, caller=src_code, callee=dst_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, callee_ancestors=dst_ancestors, callee_descendants=dst_descendants, mvs=mvs)
+        response, response_content, prompt = do_experiment(few_shot_examples=few_shot_examples, caller=src_code, caller_fqn=src, callee_fqn=dst, funcname=dst_funcname, caller_class=src_class, callee_class=dst_class, caller_ancestors=src_ancestors, caller_descendants=src_descendants, callee_ancestors=dst_ancestors, callee_descendants=dst_descendants, mvs=mvs)
         # 1. 记录回复的 response
         extract_and_save_info_from_response(r = response, program_idx=program_idx, idx=idx, r_saved_filepath=r_saved_filepath)
         response_content = response_content.replace('"', '""')
